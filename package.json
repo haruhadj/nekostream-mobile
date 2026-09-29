@@ -52,8 +52,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "db:generate": "drizzle-kit generate",
-    "dev": "NEKOSTREAM_VARIANT=development expo start --dev-client --max-workers 2",
-    "android:dev": "NEKOSTREAM_VARIANT=development expo prebuild --platform android --no-install && NEKOSTREAM_VARIANT=development expo run:android --app-id org.nekostream.mobile.dev"
+    "dev": "NEKOSTREAM_VARIANT=development NEKOSTREAM_BUILD_MODE=development expo start --dev-client --max-workers 2",
+    "android:dev": "NEKOSTREAM_VARIANT=development NEKOSTREAM_BUILD_MODE=development expo prebuild --platform android --no-install && NEKOSTREAM_VARIANT=development NEKOSTREAM_BUILD_MODE=development expo run:android --app-id org.nekostream.mobile.dev"
   },
   "private": true
 }

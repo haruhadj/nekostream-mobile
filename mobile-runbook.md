@@ -104,26 +104,9 @@ Wi-Fi is doing.
 
 ## Release APK
 
-### Standalone build for the existing development install
-
-When the original production signing key is unavailable, a standalone build
-can update **NekoStream Dev** while keeping the original release untouched:
-
-```bash
-source scripts/dev-env.sh
-NEKOSTREAM_VARIANT=development NEKOSTREAM_BUILD_MODE=standalone npx expo prebuild --platform android --no-install
-cd android
-NEKOSTREAM_VARIANT=development NEKOSTREAM_BUILD_MODE=standalone ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --max-workers=1 -Pkotlin.compiler.execution.strategy=in-process
-adb install -r app/build/outputs/apk/release/app-release.apk
-```
-
-This APK excludes development tooling, shrinks code and resources, bundles
-JavaScript and runs without Metro. It retains the development
-package and debug signing certificate; it is for local use, not production
-distribution. Confirm its certificate matches the installed development app
-before installing. The architecture above targets the connected arm64 phone.
-For an update to the original **NekoStream** release, use its original keystore
-and the production workflow below.
+Keep **NekoStream Dev** as a debug development client for Metro and Fast Refresh.
+Standalone release builds belong to **NekoStream** (`org.nekostream.mobile`).
+Installing a release under the Dev package replaces its development client.
 
 ### Production build
 

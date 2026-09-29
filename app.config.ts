@@ -3,8 +3,12 @@ import type { ConfigContext, ExpoConfig } from "expo/config";
 /** Keep the development install separate from the user's release database. */
 export default function appConfig({ config }: ConfigContext): ExpoConfig {
   const development = process.env.NEKOSTREAM_VARIANT === "development";
-  const standalone =
-    process.env.NEKOSTREAM_BUILD_MODE === "standalone" || !development;
+  if (development && process.env.NEKOSTREAM_BUILD_MODE === "standalone") {
+    throw new Error(
+      "Standalone builds must use NEKOSTREAM_VARIANT=production. Keep NekoStream Dev for Fast Refresh.",
+    );
+  }
+  const standalone = !development;
   return {
     ...config,
     name: development ? "NekoStream Dev" : "NekoStream",
