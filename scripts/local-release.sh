@@ -26,6 +26,7 @@ export ANDROID_HOME="${ANDROID_HOME:-C:/Users/haruhadj/scoop/apps/android-clt/cu
 # AGP for RN 0.86 wants 17. Override with NEKOSTREAM_JDK if that ever changes.
 export JAVA_HOME="${NEKOSTREAM_JDK:-${JAVA_HOME:-C:/Users/haruhadj/scoop/apps/temurin17-jdk/current}}"
 export NEKOSTREAM_VARIANT=production
+export NEKOSTREAM_BUILD_MODE=standalone
 
 KEYSTORE="$MOBILE/credentials/nekostream-release.keystore"
 PASS="${NEKOSTREAM_KEYSTORE_PASS:-nekostream}"
@@ -60,7 +61,7 @@ cd "$MOBILE/android"
 # task's input tracking, and re-bundling costs seconds.
 rm -rf app/build/generated/assets/react/release
 
-./gradlew assembleRelease
+./gradlew assembleRelease --max-workers=1 -Pkotlin.compiler.execution.strategy=in-process
 
 "$APKSIGNER" sign \
   --ks "$KEYSTORE" \

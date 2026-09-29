@@ -3,10 +3,26 @@ import type { ConfigContext, ExpoConfig } from "expo/config";
 /** Keep the development install separate from the user's release database. */
 export default function appConfig({ config }: ConfigContext): ExpoConfig {
   const development = process.env.NEKOSTREAM_VARIANT === "development";
+  const standalone =
+    process.env.NEKOSTREAM_BUILD_MODE === "standalone" || !development;
   return {
     ...config,
     name: development ? "NekoStream Dev" : "NekoStream",
     slug: "nekostream",
+    plugins: [
+      ...(config.plugins ?? []),
+      [
+        "expo-build-properties",
+        {
+          android: {
+            enableMinifyInReleaseBuilds: true,
+            enableShrinkResourcesInReleaseBuilds: true,
+            networkInspector: !standalone,
+          },
+        },
+      ],
+      ...(standalone ? ["./plugins/with-standalone-android"] : []),
+    ],
     android: {
       ...config.android,
       package: development
