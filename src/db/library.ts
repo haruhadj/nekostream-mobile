@@ -52,6 +52,17 @@ export async function libraryMediaIds(): Promise<number[]> {
   return rows.map((row) => row.anilistMediaId);
 }
 
+export async function entryByMediaId(
+  mediaId: number,
+): Promise<LibraryEntryRow | null> {
+  const [row] = await db
+    .select()
+    .from(libraryEntry)
+    .where(eq(libraryEntry.anilistMediaId, mediaId))
+    .limit(1);
+  return row ?? null;
+}
+
 /* ------------------------------------------------------------------ *
  * Import
  * ------------------------------------------------------------------ */
@@ -120,7 +131,7 @@ export async function addEntry(row: {
 
 /** Entries whose broadcast times haven't been refreshed since `staleBefore`. */
 export async function entriesNeedingAiring(
-  staleBefore: Date
+  staleBefore: Date,
 ): Promise<{ id: string; anilistMediaId: number }[]> {
   const rows = await db
     .select({
@@ -134,7 +145,7 @@ export async function entriesNeedingAiring(
     .filter(
       (row) =>
         row.airingSyncedAt === null ||
-        row.airingSyncedAt.getTime() < staleBefore.getTime()
+        row.airingSyncedAt.getTime() < staleBefore.getTime(),
     )
     .map(({ id, anilistMediaId }) => ({ id, anilistMediaId }));
 }
@@ -147,7 +158,7 @@ export async function entriesNeedingAiring(
 export async function applyAiringSchedules(
   entries: { id: string; anilistMediaId: number }[],
   schedules: AiringSchedule[],
-  now: Date
+  now: Date,
 ): Promise<void> {
   const byMediaId = new Map(schedules.map((s) => [s.anilistMediaId, s]));
 
@@ -221,7 +232,7 @@ export async function scheduleEntries(): Promise<ScheduleRow[]> {
             hasFeed: row.hasFeed !== null,
           },
         ]
-      : []
+      : [],
   );
 }
 
@@ -236,7 +247,7 @@ export async function scheduleEntries(): Promise<ScheduleRow[]> {
  */
 export async function setProgress(
   id: string,
-  progress: number
+  progress: number,
 ): Promise<LibraryEntryRow | null> {
   const now = new Date();
 
@@ -253,7 +264,7 @@ export async function setProgress(
  * ------------------------------------------------------------------ */
 
 export async function episodeCounts(
-  entryIds: string[]
+  entryIds: string[],
 ): Promise<Map<string, number>> {
   if (entryIds.length === 0) return new Map();
 
@@ -275,7 +286,7 @@ export async function episodeCounts(
  */
 export async function setTrackerFields(
   id: string,
-  values: { progress?: number; anilistStatus?: string }
+  values: { progress?: number; anilistStatus?: string },
 ): Promise<void> {
   const now = new Date();
 
@@ -287,7 +298,7 @@ export async function setTrackerFields(
 
 export async function setSyncFlags(
   id: string,
-  flags: { syncAnilist?: boolean; syncMal?: boolean }
+  flags: { syncAnilist?: boolean; syncMal?: boolean },
 ): Promise<void> {
   await db
     .update(libraryEntry)

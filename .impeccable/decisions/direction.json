@@ -1,0 +1,260 @@
+{
+  "title": "NekoStream\u2019s new design",
+  "question": "Choose the look to build directly in your Android development app.",
+  "options": [
+    {
+      "id": "assigned",
+      "label": "Season guide",
+      "kicker": "THE ROLL",
+      "lineage": "Seasonal anime broadcast guides",
+      "thesis": "Your anime season at a glance, with the next episode always easy to find.",
+      "palette": [
+        "#10141B",
+        "#1C2430",
+        "#B6E4D0",
+        "#EDF2EF"
+      ],
+      "materials": [
+        "midnight tonal surfaces",
+        "unaltered anime cover art",
+        "crisp native typography"
+      ],
+      "viewport": "A compact NekoStream app bar, library heading, current-watching shelf, status filters, and a readable poster grid.",
+      "risk": "The continue-watching shelf needs restraint so a large library remains quick to scan.",
+      "comp": ".impeccable/mocks/decision/assigned.png",
+      "wireframe": {
+        "cols": 6,
+        "rows": 12,
+        "regions": [
+          {
+            "label": "NekoStream / Library",
+            "x": 0,
+            "y": 0,
+            "w": 6,
+            "h": 2
+          },
+          {
+            "label": "Continue watching",
+            "x": 0,
+            "y": 2,
+            "w": 6,
+            "h": 3,
+            "accent": true
+          },
+          {
+            "label": "Status & search",
+            "x": 0,
+            "y": 5,
+            "w": 6,
+            "h": 2
+          },
+          {
+            "label": "Poster library",
+            "x": 0,
+            "y": 7,
+            "w": 6,
+            "h": 4
+          },
+          {
+            "label": "Library \u00b7 Airing \u00b7 Discover \u00b7 You",
+            "x": 0,
+            "y": 11,
+            "w": 6,
+            "h": 1
+          }
+        ]
+      },
+      "raised": [
+        {
+          "from": "Night queue",
+          "raise": "Clear priority without decorative containers."
+        },
+        {
+          "from": "Episode counter",
+          "raise": "Progress must be readable before tapping."
+        },
+        {
+          "from": "Season atlas",
+          "raise": "A consistent importance hierarchy."
+        },
+        {
+          "from": "Anime district",
+          "raise": "Each action explains the task it performs."
+        },
+        {
+          "from": "Broadcast horizon",
+          "raise": "Time and watched states receive explicit text labels."
+        },
+        {
+          "from": "Watching garden",
+          "raise": "Keep one task dominant in each section."
+        }
+      ]
+    },
+    {
+      "id": "model-pick",
+      "label": "Anime shelf",
+      "kicker": "IMPECCABLE\u2019S PICK",
+      "lineage": "Personal anime media shelves",
+      "thesis": "A familiar, polished anime library with artwork first and progress close at hand.",
+      "palette": [
+        "#131217",
+        "#211E29",
+        "#CBBBF7",
+        "#F4F0FA"
+      ],
+      "materials": [
+        "soft violet tonal surfaces",
+        "compact artwork shelves",
+        "native controls"
+      ],
+      "viewport": "A bold library title, watching shelf, status chips, search, and three-column posters.",
+      "risk": "Familiar and effective, but closer to existing anime catalog apps.",
+      "comp": ".impeccable/mocks/decision/model-pick.png"
+    },
+    {
+      "id": "operate-c-cracktro-scroller-queue",
+      "label": "Night queue",
+      "verdict": "declined",
+      "lineage": "bitmap baselines",
+      "thesis": "An ordered watching queue with the nearest episode pulled forward.",
+      "palette": [
+        "#080808",
+        "#ECE6D9",
+        "#E7AE46"
+      ],
+      "materials": [
+        "bitmap baselines"
+      ],
+      "viewport": "An ordered watching queue with the nearest episode pulled forward.",
+      "risk": "The bitmap face and layered depth weaken long-title readability.",
+      "case": "Lower audience identification and task clarity than the seasonal guide.",
+      "kept": "Clear priority without decorative containers."
+    },
+    {
+      "id": "signals-instruments-nixie-laboratory-counter",
+      "label": "Episode counter",
+      "verdict": "declined",
+      "lineage": "glowing episode numerals",
+      "thesis": "Watched and total episode counters lead the library.",
+      "palette": [
+        "#111215",
+        "#FF9C42",
+        "#B7B4AF"
+      ],
+      "materials": [
+        "glowing episode numerals"
+      ],
+      "viewport": "Watched and total episode counters lead the library.",
+      "risk": "Counters dominate artwork and obscure discovery.",
+      "case": "Lower audience identification and task clarity than the seasonal guide.",
+      "kept": "Progress must be readable before tapping."
+    },
+    {
+      "id": "notation-diagram-systems-star-atlas",
+      "label": "Season atlas",
+      "verdict": "declined",
+      "lineage": "chart coordinates",
+      "thesis": "Seasonal anime become ranked anchors in a browseable field.",
+      "palette": [
+        "#111C31",
+        "#EEEDE8",
+        "#D6985E"
+      ],
+      "materials": [
+        "chart coordinates"
+      ],
+      "viewport": "Seasonal anime become ranked anchors in a browseable field.",
+      "risk": "Spatial browsing slows finding a known title.",
+      "case": "Lower audience identification and task clarity than the seasonal guide.",
+      "kept": "A consistent importance hierarchy."
+    },
+    {
+      "id": "graphic-worlds-publishing-busytown-cross-section",
+      "label": "Anime district",
+      "verdict": "declined",
+      "lineage": "labeled cross-section",
+      "thesis": "Library, discovery, and airing occupy a labeled neighborhood.",
+      "palette": [
+        "#F6EEE0",
+        "#B74639",
+        "#EBCA54",
+        "#65906E"
+      ],
+      "materials": [
+        "labeled cross-section"
+      ],
+      "viewport": "Library, discovery, and airing occupy a labeled neighborhood.",
+      "risk": "Illustrative navigation takes more effort than native tabs.",
+      "case": "Lower audience identification and task clarity than the seasonal guide.",
+      "kept": "Each action explains the task it performs."
+    },
+    {
+      "id": "stagecraft-theater-lighting-cyclorama-dawn",
+      "label": "Broadcast horizon",
+      "verdict": "declined",
+      "lineage": "horizontal cue bands",
+      "thesis": "Airing and watching are organized in clearly labeled time bands.",
+      "palette": [
+        "#101018",
+        "#4265B5",
+        "#D991AC"
+      ],
+      "materials": [
+        "horizontal cue bands"
+      ],
+      "viewport": "Airing and watching are organized in clearly labeled time bands.",
+      "risk": "Atmosphere competes with the art and obscures dense library content.",
+      "case": "Lower audience identification and task clarity than the seasonal guide.",
+      "kept": "Time and watched states receive explicit text labels."
+    },
+    {
+      "id": "dream-surreal-impossible-worlds-gravity-rain-garden",
+      "label": "Watching garden",
+      "verdict": "declined",
+      "lineage": "gravity fields",
+      "thesis": "Progress organizes the watching list into active regions.",
+      "palette": [
+        "#33463D",
+        "#A5BDC4",
+        "#BC665D"
+      ],
+      "materials": [
+        "gravity fields"
+      ],
+      "viewport": "Progress organizes the watching list into active regions.",
+      "risk": "Physics and moving labels make everyday tasks harder.",
+      "case": "Lower audience identification and task clarity than the seasonal guide.",
+      "kept": "Keep one task dominant in each section."
+    }
+  ],
+  "reroll": {
+    "registers": [
+      "safer",
+      "bolder"
+    ]
+  },
+  "buildPath": {
+    "value": "code",
+    "toggle": true
+  },
+  "canon": true,
+  "canonCard": {
+    "label": "Familiar anime app",
+    "thesis": "A conventional anime catalog, executed with clear native controls.",
+    "palette": [
+      "#101014",
+      "#25252C",
+      "#979AFF",
+      "#F7F7FC"
+    ],
+    "materials": [
+      "dark poster grid",
+      "standard navigation"
+    ],
+    "viewport": "Library filters above posters, with airing, discovery, and account tabs.",
+    "risk": "Visually similar to other anime tracking apps.",
+    "comp": ".impeccable/mocks/decision/canon.png"
+  },
+  "steer": true
+}

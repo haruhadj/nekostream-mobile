@@ -4,7 +4,13 @@
  * (#09090b) — the app is dark-only, so there is nothing else to blend against.
  */
 
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 
 import { theme } from "@/theme";
 
@@ -41,14 +47,14 @@ const styles = StyleSheet.create({
 });
 
 const fills = StyleSheet.create({
-  default: { backgroundColor: "#1b1b30" },
+  default: { backgroundColor: theme.color.accentContainer },
   outline: {
     backgroundColor: "transparent",
     borderColor: theme.color.border,
   },
   /** The solid one — reserved for "this is the next thing to happen". */
   accent: { backgroundColor: theme.color.accent },
-  warning: { backgroundColor: "#2c2311" },
+  warning: { backgroundColor: theme.color.amberBorder },
 });
 
 const labels = StyleSheet.create({

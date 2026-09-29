@@ -1,68 +1,60 @@
 import Feather from "@expo/vector-icons/Feather";
-// `Tabs` re-exported from "expo-router" itself is deprecated in SDK 57 — this
-// is the same stable JS tab navigator under its current name. Deliberately not
-// `expo-router/unstable-native-tabs`, which is what the SDK 57 template
-// scaffolds; use the Expo SDK 57 API.
 import { Tabs } from "expo-router/js-tabs";
-
+import { View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { theme } from "@/theme";
 
-/**
- * The four destinations from the web's `SiteHeader`, in the same order. The
- * web renders them twice — a top bar on desktop, a bottom tab bar on phones —
- * and only the second one has a counterpart here.
- */
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
-        // Each screen draws its own title, matching the web pages.
         headerShown: false,
         tabBarActiveTintColor: theme.color.accent,
         tabBarInactiveTintColor: theme.color.muted,
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
-          backgroundColor: theme.color.background,
-          borderTopColor: theme.color.border,
+          backgroundColor: theme.color.surface,
+          borderTopWidth: 0,
+          height: 76 + insets.bottom,
+          paddingTop: 8,
+          paddingBottom: Math.max(insets.bottom, 8),
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: "600", marginTop: 4 },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Library",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="book" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="schedule"
-        options={{
-          title: "Schedule",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="calendar" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="search"
-        options={{
-          title: "Search",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="search" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: "Settings",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="settings" color={color} size={size} />
-          ),
-        }}
-      />
+      {(
+        [
+          ["index", "Library", "book-open"],
+          ["schedule", "Airing", "calendar"],
+          ["search", "Discover", "compass"],
+          ["settings", "You", "user"],
+        ] as const
+      ).map(([name, title, icon]) => (
+        <Tabs.Screen
+          key={name}
+          name={name}
+          options={{
+            title,
+            tabBarIcon: ({ color, focused }) => (
+              <View
+                style={{
+                  width: 60,
+                  height: 32,
+                  borderRadius: 16,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: focused
+                    ? theme.color.accentContainer
+                    : "transparent",
+                }}
+              >
+                <Feather name={icon} color={color} size={21} />
+              </View>
+            ),
+          }}
+        />
+      ))}
     </Tabs>
   );
 }

@@ -33,9 +33,7 @@ export function SearchResultCard({
   return (
     <View style={styles.card}>
       <AnimePoster coverImageUrl={media.coverImage?.large}>
-        {inLibrary ? (
-          <Badge label="In library" style={styles.badge} />
-        ) : null}
+        {inLibrary ? <Badge label="In library" style={styles.badge} /> : null}
       </AnimePoster>
 
       <AnimeTitle>{media.title.english ?? media.title.romaji}</AnimeTitle>
@@ -45,7 +43,7 @@ export function SearchResultCard({
           format/year can't float the button up out of the row. */}
       <View style={styles.action}>
         <Button
-          label={inLibrary ? "In library" : "Add"}
+          label={inLibrary ? "Added" : "Add"}
           variant={inLibrary ? "outline" : "primary"}
           size="sm"
           onPress={onAdd}

@@ -45,3 +45,8 @@ example
 # Local release signing key. Not a shared secret worth committing — regenerate
 # with scripts/local-release.sh if it is ever lost (costs one uninstall).
 /credentials
+
+# Local design decision server and hardware captures
+.impeccable/questions/
+.impeccable/review/
+.codebase-memory/

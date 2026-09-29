@@ -95,9 +95,14 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: 4,
+    height: 3,
     backgroundColor: "rgba(9, 9, 11, 0.5)",
   },
   progressFill: { height: "100%", backgroundColor: theme.color.accent },
-  progressLabel: { marginTop: 4, color: theme.color.muted, fontSize: 11 },
+  progressLabel: {
+    marginTop: 4,
+    color: theme.color.muted,
+    fontSize: 12,
+    lineHeight: 18,
+  },
 });

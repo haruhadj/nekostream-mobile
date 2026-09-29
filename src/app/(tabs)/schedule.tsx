@@ -1,5 +1,11 @@
 import { useMemo } from "react";
-import { RefreshControl, SectionList, StyleSheet, Text, View } from "react-native";
+import {
+  RefreshControl,
+  SectionList,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 import { useQuery } from "@/data/use-query";
 import { scheduleEntries, type ScheduleRow } from "@/db/library";
@@ -33,7 +39,7 @@ export default function ScheduleScreen() {
 
   const { data, loading, error, refreshing, refresh } = useQuery(
     scheduleEntries,
-    "Could not read your schedule."
+    "Could not read your schedule.",
   );
 
   const entries = useMemo<ScheduleRow[]>(() => data ?? [], [data]);
@@ -47,13 +53,13 @@ export default function ScheduleScreen() {
         label: group.label,
         data: group.entries,
       })),
-    [entries, now]
+    [entries, now],
   );
 
   // The single soonest-upcoming entry overall gets the "Airing Next" badge —
   // the flat list is already ascending, so the first one past `now` is it.
   const airingNextId = entries.find(
-    (entry) => entry.airingAt.getTime() > now
+    (entry) => entry.airingAt.getTime() > now,
   )?.id;
 
   if (loading) {
@@ -93,14 +99,18 @@ export default function ScheduleScreen() {
         ListHeaderComponent={
           <View>
             <ScreenTitle
-              title="Schedule"
-              subtitle="The next episode for everything in your library that's still airing."
+              title="On the air"
+              subtitle="Your next episodes, in your local time."
             />
             {error ? <Text style={styles.error}>{error}</Text> : null}
           </View>
         }
         ListEmptyComponent={
-          <EmptyState message="Nothing airing right now. Shows with a broadcast still ahead will show up here." />
+          <EmptyState
+            title="A quiet season"
+            icon="calendar"
+            message="Airing anime from your library will appear here. Add a currently airing show to get started."
+          />
         }
       />
     </Screen>
@@ -112,11 +122,8 @@ const styles = StyleSheet.create({
   sectionHeader: {
     marginTop: 24,
     marginBottom: 4,
-    color: theme.color.muted,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 2,
-    textTransform: "uppercase",
+    color: theme.color.foreground,
+    ...theme.type.section,
   },
   error: { marginTop: 12, color: theme.color.danger, fontSize: 12 },
 });

@@ -1,21 +1,26 @@
 # Running the mobile app
 
-Two workflows, and they are not interchangeable: a **debug build** wired to a
-Metro dev server for day-to-day work, and a **signed release APK** that stands
-alone. Switching between them costs an uninstall — see [Switching between
-them](#switching-between-them) before you start.
+Use **NekoStream Dev** with Expo and Metro for daily development. UI edits
+appear through Fast Refresh. Build a **signed release APK** after development;
+it runs without a development server.
 
-**Expo Go cannot run this project.** Not "is discouraged" — it fails. The OAuth
-redirect URIs are registered character for character in the AniList and MAL
-consoles as `nekostream://auth/anilist` and `nekostream://auth/mal`
-(`src/auth/config.ts`), and Expo Go does not own that scheme, so the callback
-never comes back and AniList sign-in gates the whole app. Expo Go also refuses
-SDK 57 projects outright, with *"Project is incompatible with this version of
-Expo Go."*
+The development app uses `org.nekostream.mobile.dev`; the release uses
+`org.nekostream.mobile`. They can coexist, each with its own database and
+tracker logins. The installed release's library and Nyaa filters stay intact.
+
+Expo Go cannot run this project: it needs custom native modules and the
+registered `nekostream://auth/anilist` and `nekostream://auth/mal` callbacks.
+`expo-dev-client` supplies the project's own development launcher instead.
 
 ## Prerequisites
 
-Both workflows need these, and the JDK pin is not optional:
+On the configured Linux workstation, load the local JDK 17, Android SDK, and Node paths:
+
+```bash
+source scripts/dev-env.sh
+```
+
+On Windows, use your installed toolchain paths:
 
 ```bash
 export JAVA_HOME="C:/Users/haruhadj/scoop/apps/temurin17-jdk/current"
@@ -36,36 +41,45 @@ adb devices    # must list one device before either workflow
 
 ## Live development
 
-### 1. Build the native app (once)
+### 1. Build the native development app (once)
+
+From this standalone repository's root:
 
 ```bash
-cd mobile
-npm run android
+source scripts/dev-env.sh # configured Linux workstation
+npm ci
+npm run android:dev
 ```
 
-This compiles, installs, and launches a debug APK, then starts Metro. Budget
-around 20 minutes for the first run; it is the only slow step.
-
-If you want the build without the interactive dev server:
-
-```bash
-cd android && ./gradlew installDebug
-```
+This generates Android files for the development variant, compiles, installs,
+and launches NekoStream Dev. The first native build downloads Gradle, SDK,
+and native dependencies and can take around 20 minutes. Subsequent UI work
+uses the same binary.
 
 ### 2. Iterate (every session after that)
 
 ```bash
-cd mobile
-npx expo start
+source scripts/dev-env.sh # configured Linux workstation
+npm run dev
 adb reverse tcp:8081 tcp:8081
 ```
 
-Then **tap the NekoStream icon on the phone**.
+Open **NekoStream Dev**, then select the Metro development server. With Expo
+Dev Client installed you can also use the terminal's `a` shortcut. Save a UI
+file to see Fast Refresh on the phone; scrcpy mirrors the same native screen.
+If the launcher needs an explicit connection:
 
-Do not press `a` and do not scan the QR code. Both open Expo Go, which then
-shows its own error screen on top of your app — the app underneath is usually
-running fine. `a` targets Expo Go because `expo-dev-client` is not a dependency
-of this project.
+```bash
+adb shell am start -a android.intent.action.VIEW \
+  -d 'exp+nekostream://expo-development-client/?url=http%3A%2F%2Flocalhost%3A8081' \
+  org.nekostream.mobile.dev
+```
+
+Sign in to AniList once in the development app to import your watchlist.
+Because both variants retain the registered `nekostream://` OAuth callback,
+Android may show an app chooser after browser sign-in: select NekoStream Dev
+for a development sign-in. Saved release feeds are not copied into the
+separate development database.
 
 Run `adb reverse` *after* `expo start`: the Expo CLI restarts the adb server on
 launch, which silently clears existing reverses. It maps the phone's
@@ -90,8 +104,33 @@ Wi-Fi is doing.
 
 ## Release APK
 
+### Standalone build for the existing development install
+
+When the original production signing key is unavailable, a standalone build
+can update **NekoStream Dev** while keeping the original release untouched:
+
 ```bash
-cd mobile
+source scripts/dev-env.sh
+NEKOSTREAM_VARIANT=development npx expo prebuild --platform android --no-install
+cd android
+NEKOSTREAM_VARIANT=development ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --max-workers=1
+adb install -r app/build/outputs/apk/release/app-release.apk
+```
+
+This APK bundles JavaScript and runs without Metro. It retains the development
+package and debug signing certificate; it is for local use, not production
+distribution. Confirm its certificate matches the installed development app
+before installing. The architecture above targets the connected arm64 phone.
+For an update to the original **NekoStream** release, use its original keystore
+and the production workflow below.
+
+### Production build
+
+The script regenerates native files for the production package, builds a
+standalone APK, and signs it. Keep the original release keystore to install
+over an existing release without clearing its data.
+
+```bash
 bash scripts/local-release.sh
 ```
 
@@ -126,9 +165,9 @@ unzip -p nekostream-signed.apk assets/index.android.bundle | grep -c "some new s
 If the keystore is ever lost, generate a new one with `keytool`. The cost is
 one uninstall, since the signature will no longer match what is installed.
 
-## Switching between them
+## Legacy builds sharing the release package
 
-Debug and release share the package id `org.nekostream.mobile` but carry
+The separate development variant avoids this problem. Older debug builds and release builds share the package id `org.nekostream.mobile` but carry
 different signatures, so Android refuses to install one over the other. The
 uninstall that unblocks it clears the app's data:
 
@@ -182,3 +221,19 @@ phone twice over wireless ADB. Pin one:
 ```bash
 export ANDROID_SERIAL="$(adb devices | sed -n 2p | cut -f1)"
 ```
+# Anime links
+
+Discover accepts pasted `https://anilist.co/anime/ID/...` and
+`https://myanimelist.net/anime/ID/...` links. Open the preview and tap
+**Add to library**; an existing title opens without changing its progress.
+Manga, profiles, lists, foreign domains and non-anime IDs are rejected.
+MAL IDs are resolved through AniList's anime catalog; entries without an
+AniList mapping cannot currently be added.
+
+Incoming Android VIEW links use the same preview, on both cold and warm launches.
+This requires rebuilding and reinstalling the APK after the intent-filter
+configuration change. The app does not own the tracker domains and cannot
+verify them as Android App Links. On newer Android versions, enable the tracker
+domains under **Settings → Apps → NekoStream Dev → Open by default → Open
+supported links** if offered; browsers may otherwise open them themselves.
+Paste the link in Discover when Android does not offer the app.

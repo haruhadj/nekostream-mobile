@@ -1,39 +1,41 @@
-/**
- * The web app's design tokens (src/app/globals.css), ported flat — no
- * light/dark switching, since the app is dark-only. Plain values, not a
- * Tailwind runtime: this file is imported directly by StyleSheet.create()
- * calls.
- */
-
+/** Shared Android color roles and type scale for the anime shelf. */
 export const theme = {
   color: {
-    background: "#09090b",
-    surface: "#18181b",
-    border: "#27272a",
-    muted: "#a1a1aa",
-    foreground: "#fafafa",
-
-    // Primary interactive color. Not a brand mark — see anilist/mal below.
-    accent: "#6366f1",
-    accentHover: "#818cf8",
-    accentForeground: "#ffffff",
-
-    // Provider brand marks only: OAuth buttons, tracker chips, the tracker
-    // dialog's provider dot. Nothing decorative reaches for these.
+    background: "#131217",
+    surface: "#211E29",
+    surfaceRaised: "#2B2635",
+    accentContainer: "#393044",
+    border: "#3B3445",
+    muted: "#BBB3C5",
+    foreground: "#F4F0FA",
+    accent: "#CBBBF7",
+    accentHover: "#DDD1FF",
+    accentForeground: "#292039",
     anilist: "#02a9ff",
-    // MAL's real navy (#2e51a2) is unreadable on the dark background —
-    // lightened for on-dark use, matching tracker-links.tsx on the web.
-    mal: "#5c7edb",
-
-    // "Aired but not watched" — the schedule's whole signal. The web says
-    // this with amber-400/amber-300 (schedule-list.tsx); these are those two,
-    // resolved, plus a pre-blended 50% fill because React Native has no
-    // stacking-context alpha shorthand.
-    amber: "#fbbf24",
-    amberText: "#fcd34d",
-    amberFill: "#7d6014",
-    amberBorder: "#4a3d1c",
-
-    danger: "#f87171",
+    mal: "#8BA6E8",
+    amber: "#F2C873",
+    amberText: "#F4D593",
+    amberFill: "#6D5325",
+    amberBorder: "#6D5325",
+    danger: "#FFB4AB",
+    success: "#A3D5B4",
+  },
+  type: {
+    headline: {
+      fontSize: 30,
+      lineHeight: 38,
+      fontWeight: "700" as const,
+      letterSpacing: -0.6,
+    },
+    title: {
+      fontSize: 20,
+      lineHeight: 28,
+      fontWeight: "700" as const,
+      letterSpacing: -0.3,
+    },
+    section: { fontSize: 18, lineHeight: 26, fontWeight: "600" as const },
+    body: { fontSize: 14, lineHeight: 22 },
+    label: { fontSize: 13, lineHeight: 18, fontWeight: "600" as const },
+    caption: { fontSize: 12, lineHeight: 18 },
   },
 } as const;

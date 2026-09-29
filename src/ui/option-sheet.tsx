@@ -12,7 +12,15 @@
  * component with a different job.
  */
 
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import Feather from "@expo/vector-icons/Feather";
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { theme } from "@/theme";
@@ -44,7 +52,11 @@ export function OptionSheet<T extends string>({
       // Android's back gesture must dismiss the sheet, not the screen behind it.
       onRequestClose={onClose}
     >
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close" />
+      <Pressable
+        style={styles.backdrop}
+        onPress={onClose}
+        accessibilityLabel="Close"
+      />
 
       <View style={[styles.panel, { paddingBottom: insets.bottom + 12 }]}>
         <View style={styles.grabHandle} />
@@ -63,14 +75,22 @@ export function OptionSheet<T extends string>({
                 }}
                 accessibilityRole="button"
                 accessibilityState={{ selected: isSelected }}
-                style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+                style={({ pressed }) => [
+                  styles.row,
+                  pressed && styles.rowPressed,
+                ]}
               >
                 <Text
-                  style={[styles.rowLabel, isSelected && styles.rowLabelSelected]}
+                  style={[
+                    styles.rowLabel,
+                    isSelected && styles.rowLabelSelected,
+                  ]}
                 >
                   {option.label}
                 </Text>
-                {isSelected ? <Text style={styles.check}>✓</Text> : null}
+                {isSelected ? (
+                  <Feather name="check" color={theme.color.accent} size={20} />
+                ) : null}
               </Pressable>
             );
           })}
@@ -101,11 +121,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   title: {
-    color: theme.color.muted,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1,
-    textTransform: "uppercase",
+    color: theme.color.foreground,
+    ...theme.type.section,
     paddingHorizontal: 12,
     paddingBottom: 8,
   },
@@ -113,7 +130,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    minHeight: 48,
+    minHeight: 56,
     paddingHorizontal: 12,
     borderRadius: 10,
   },

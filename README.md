@@ -13,8 +13,11 @@ build + Metro workflow, release APK signing, and device troubleshooting.
 npm ci
 npm run typecheck
 npm run lint
-npm run android
+npm run android:dev
 ```
+
+Use `npm run dev` with the installed **NekoStream Dev** app for Fast Refresh.
+The development app is separate from the release app and keeps its own data.
 
 Expo Go cannot run this app: it requires a custom native binary for the
 `nekostream://` OAuth callbacks and native SQLite/SecureStore modules.

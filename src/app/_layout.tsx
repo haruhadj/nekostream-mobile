@@ -67,6 +67,7 @@ function RootNavigator() {
         contentStyle: { backgroundColor: theme.color.background },
       }}
     >
+      <Stack.Screen name="add-anime" />
       <Stack.Protected guard={status === "ready"}>
         <Stack.Screen name="(tabs)" />
       </Stack.Protected>

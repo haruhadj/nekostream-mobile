@@ -11,7 +11,11 @@
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { buildQuery, discoverFilters, type DiscoveryResult } from "@shared/nyaa/discover";
+import {
+  buildQuery,
+  discoverFilters,
+  type DiscoveryResult,
+} from "@shared/nyaa/discover";
 import type { SavedFilter } from "@shared/nyaa/filter";
 
 import { theme } from "@/theme";
@@ -34,10 +38,10 @@ export function NyaaFilterSetup({
   const [title, setTitle] = useState(savedFilter?.query ?? defaultTitle);
   const [discovery, setDiscovery] = useState<DiscoveryResult | null>(null);
   const [group, setGroup] = useState<string | null>(
-    savedFilter?.releaseGroup ?? null
+    savedFilter?.releaseGroup ?? null,
   );
   const [quality, setQuality] = useState<string | null>(
-    savedFilter?.quality ?? null
+    savedFilter?.quality ?? null,
   );
 
   // Starts true rather than being flipped on inside the mount effect: the
@@ -55,7 +59,7 @@ export function NyaaFilterSetup({
     setQuality((q) => q ?? discovered.defaultQuality);
     setGroup(
       (g) =>
-        g ?? discovered.groups.find((x) => x.recommended)?.releaseGroup ?? null
+        g ?? discovered.groups.find((x) => x.recommended)?.releaseGroup ?? null,
     );
   }
 
@@ -84,7 +88,7 @@ export function NyaaFilterSetup({
     void (async () => {
       try {
         const discovered = await discoverFilters(
-          savedFilter?.query ?? defaultTitle
+          savedFilter?.query ?? defaultTitle,
         );
         if (!cancelled) apply(discovered);
       } catch (thrown) {
@@ -105,16 +109,24 @@ export function NyaaFilterSetup({
     setSaving(true);
     setError(null);
 
-    const message = await onSave({
-      query: composedQuery,
-      category: savedFilter?.category ?? "1_2",
-      filter: savedFilter?.filter ?? "0",
-      releaseGroup: group,
-      quality,
-    });
-
-    if (message) setError(message);
-    setSaving(false);
+    try {
+      const message = await onSave({
+        query: composedQuery,
+        category: savedFilter?.category ?? "1_2",
+        filter: savedFilter?.filter ?? "0",
+        releaseGroup: group,
+        quality,
+      });
+      if (message) setError(message);
+    } catch (thrown) {
+      setError(
+        thrown instanceof Error
+          ? thrown.message
+          : "Could not save the feed. Try again.",
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -161,7 +173,7 @@ export function NyaaFilterSetup({
               discovery.groups.map((g) => [
                 g.releaseGroup,
                 `${g.releaseCount} releases`,
-              ])
+              ]),
             )}
             selected={group}
             onSelect={setGroup}
@@ -188,7 +200,11 @@ export function NyaaFilterSetup({
         />
 
         {onCancel ? (
-          <Pressable onPress={onCancel} accessibilityRole="button">
+          <Pressable
+            onPress={onCancel}
+            accessibilityRole="button"
+            style={styles.cancelButton}
+          >
             <Text style={styles.cancel}>Cancel</Text>
           </Pressable>
         ) : null}
@@ -260,9 +276,14 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 10,
   },
-  heading: { color: theme.color.foreground, fontSize: 14, fontWeight: "700" },
+  heading: { color: theme.color.foreground, ...theme.type.section },
   blurb: { color: theme.color.muted, fontSize: 13, lineHeight: 19 },
-  searchRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 4 },
+  searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 4,
+  },
   searchInput: { flex: 1 },
   error: { color: theme.color.danger, fontSize: 13, lineHeight: 18 },
   picker: { marginTop: 6, gap: 8 },
@@ -275,7 +296,7 @@ const styles = StyleSheet.create({
   },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: {
-    minHeight: 36,
+    minHeight: 48,
     justifyContent: "center",
     borderRadius: 999,
     paddingHorizontal: 12,
@@ -305,9 +326,10 @@ const styles = StyleSheet.create({
   query: {
     color: theme.color.foreground,
     fontSize: 12,
-    fontFamily: "monospace",
+    lineHeight: 20,
   },
   saveButton: { marginTop: 6 },
+  cancelButton: { minHeight: 48, justifyContent: "center" },
   cancel: {
     marginTop: 4,
     color: theme.color.muted,

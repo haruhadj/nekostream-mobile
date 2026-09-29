@@ -52,6 +52,18 @@ export function EpisodeList({
     }
   }
 
+  async function markWatched(next: number) {
+    try {
+      await onMarkWatched(next);
+    } catch (thrown) {
+      setMessage(
+        thrown instanceof Error
+          ? thrown.message
+          : "Could not save progress. Try again.",
+      );
+    }
+  }
+
   async function openMagnet(magnetUri: string) {
     try {
       await Linking.openURL(magnetUri);
@@ -60,7 +72,7 @@ export function EpisodeList({
       // and the OS error alone ("no activity found") explains nothing.
       Alert.alert(
         "No app for magnet links",
-        "Install a torrent client that handles magnet links, then try again."
+        "Install a torrent client that handles magnet links, then try again.",
       );
     }
   }
@@ -154,15 +166,15 @@ export function EpisodeList({
                       size="sm"
                       disabled={busy}
                       onPress={() =>
-                        void onMarkWatched(
-                          watched ? episodeNumber - 1 : episodeNumber
+                        void markWatched(
+                          watched ? episodeNumber - 1 : episodeNumber,
                         )
                       }
                     />
                   ) : null}
 
                   <Button
-                    label="Magnet"
+                    label="Open magnet"
                     size="sm"
                     onPress={() => void openMagnet(ep.magnetUri)}
                   />
@@ -179,7 +191,7 @@ export function EpisodeList({
 const styles = StyleSheet.create({
   section: { gap: 12 },
   header: { gap: 8 },
-  heading: { color: theme.color.foreground, fontSize: 14, fontWeight: "700" },
+  heading: { color: theme.color.foreground, ...theme.type.section },
   headerRight: {
     flexDirection: "row",
     alignItems: "center",
@@ -190,9 +202,9 @@ const styles = StyleSheet.create({
   empty: {
     borderRadius: 12,
     borderWidth: 1,
-    borderStyle: "dashed",
+
     borderColor: theme.color.border,
-    paddingVertical: 32,
+    paddingVertical: 24,
     paddingHorizontal: 20,
   },
   emptyText: {
@@ -207,13 +219,13 @@ const styles = StyleSheet.create({
     borderColor: theme.color.border,
     overflow: "hidden",
   },
-  row: { padding: 12, gap: 10, backgroundColor: theme.color.surface },
+  row: { padding: 16, gap: 10, backgroundColor: theme.color.surface },
   rowDivided: { borderTopWidth: 1, borderTopColor: theme.color.border },
   rowWatched: { backgroundColor: theme.color.background },
   rowTop: { flexDirection: "row", gap: 12 },
   number: {
-    height: 32,
-    width: 32,
+    height: 40,
+    width: 40,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: theme.color.border,

@@ -7,8 +7,16 @@
  * away from an episode list, not two.
  */
 
+import Feather from "@expo/vector-icons/Feather";
 import { useState } from "react";
-import { Alert, Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Alert,
+  Linking,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 import type { SavedFilter } from "@shared/nyaa/filter";
 
@@ -31,10 +39,26 @@ export function NyaaFilterPanel({
   onSave: (filter: SavedFilter) => Promise<string | null>;
   onRemove: () => Promise<void>;
 }) {
-  const [editing, setEditing] = useState(!savedFilter);
+  const [editing, setEditing] = useState(false);
   const [removing, setRemoving] = useState(false);
 
-  if (editing || !savedFilter) {
+  if (!editing && !savedFilter) {
+    return (
+      <View style={styles.card}>
+        <Text style={styles.queryTitle}>Find episode releases</Text>
+        <Text style={styles.helper}>
+          Choose a release group and quality to find this anime on Nyaa.
+        </Text>
+        <Button
+          label="Set up episode feed"
+          variant="outline"
+          onPress={() => setEditing(true)}
+        />
+      </View>
+    );
+  }
+
+  if (editing) {
     return (
       <NyaaFilterSetup
         defaultTitle={defaultTitle}
@@ -44,10 +68,12 @@ export function NyaaFilterPanel({
           if (!error) setEditing(false);
           return error;
         }}
-        onCancel={savedFilter ? () => setEditing(false) : undefined}
+        onCancel={() => setEditing(false)}
       />
     );
   }
+
+  if (!savedFilter) return null;
 
   function confirmRemove() {
     // The web's `confirm()`, with the destructive styling a phone expects.
@@ -61,16 +87,23 @@ export function NyaaFilterPanel({
           style: "destructive",
           onPress: () => {
             setRemoving(true);
-            void onRemove().finally(() => setRemoving(false));
+            void onRemove()
+              .catch(() =>
+                Alert.alert(
+                  "Could not stop tracking",
+                  "The feed is still saved. Try again.",
+                ),
+              )
+              .finally(() => setRemoving(false));
           },
         },
-      ]
+      ],
     );
   }
 
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>Nyaa feed</Text>
+      <Text style={styles.queryTitle}>Episode feed</Text>
       <Text style={styles.query} numberOfLines={2}>
         {savedFilter.query}
       </Text>
@@ -90,10 +123,12 @@ export function NyaaFilterPanel({
           onPress={confirmRemove}
         />
         <Pressable
+          style={styles.externalLink}
           accessibilityRole="link"
           onPress={() => void Linking.openURL(nyaaUrl(savedFilter))}
         >
-          <Text style={styles.link}>Open on Nyaa ↗</Text>
+          <Text style={styles.link}>Open on Nyaa</Text>
+          <Feather name="external-link" size={14} color={theme.color.muted} />
         </Pressable>
       </View>
     </View>
@@ -101,6 +136,16 @@ export function NyaaFilterPanel({
 }
 
 const styles = StyleSheet.create({
+  queryTitle: { ...theme.type.section, color: theme.color.foreground },
+  helper: { ...theme.type.body, color: theme.color.muted, marginBottom: 8 },
+  externalLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    minHeight: 48,
+    justifyContent: "center",
+    paddingHorizontal: 8,
+  },
   card: {
     borderRadius: 12,
     borderWidth: 1,
@@ -119,7 +164,7 @@ const styles = StyleSheet.create({
   query: {
     color: theme.color.foreground,
     fontSize: 12,
-    fontFamily: "monospace",
+    lineHeight: 20,
   },
   actions: {
     marginTop: 8,

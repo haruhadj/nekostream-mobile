@@ -84,9 +84,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    minHeight: 36,
+    minHeight: 48,
     paddingHorizontal: 14,
-    borderRadius: 999,
+    borderRadius: 12,
     borderWidth: 1,
   },
   chipIdle: {
@@ -95,18 +95,18 @@ const styles = StyleSheet.create({
   },
   chipActive: {
     borderColor: theme.color.accent,
-    backgroundColor: theme.color.accent,
+    backgroundColor: theme.color.accentContainer,
   },
   chipPressed: { opacity: 0.75 },
   label: { fontSize: 12, fontWeight: "600" },
   labelIdle: { color: theme.color.muted },
-  labelActive: { color: theme.color.accentForeground },
+  labelActive: { color: theme.color.accent },
   count: {
     borderRadius: 999,
     paddingHorizontal: 6,
     paddingVertical: 1,
     backgroundColor: theme.color.background,
   },
-  countActive: { backgroundColor: "rgba(9, 9, 11, 0.25)" },
+  countActive: { backgroundColor: theme.color.surface },
   countText: { fontSize: 10, fontWeight: "600" },
 });

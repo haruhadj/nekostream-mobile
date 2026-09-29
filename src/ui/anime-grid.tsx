@@ -20,7 +20,7 @@ import { theme } from "@/theme";
 export const GRID_GAP = 12;
 
 /** The horizontal gutter both grids sit inside — SCREEN_PADDING, doubled. */
-const GUTTER = 32;
+const GUTTER = 40;
 
 /**
  * How wide a poster wants to be, in dp. Everything else follows from it.
@@ -46,9 +46,9 @@ export const GRID_COLUMNS = Math.min(
     2,
     Math.floor(
       (Dimensions.get("window").width - GUTTER + GRID_GAP) /
-        (TARGET_POSTER_WIDTH + GRID_GAP)
-    )
-  )
+        (TARGET_POSTER_WIDTH + GRID_GAP),
+    ),
+  ),
 );
 
 /** What one card may occupy, so a half-filled final row keeps column width. */
@@ -100,18 +100,17 @@ const styles = StyleSheet.create({
     width: "100%",
     overflow: "hidden",
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.color.border,
+
     backgroundColor: theme.color.surface,
   },
   title: {
-    marginTop: 6,
+    marginTop: 8,
     color: theme.color.foreground,
     // Scales with the column count: at three-up, a 13pt title wraps to two
     // lines on almost every show and the rows go ragged.
-    fontSize: GRID_COLUMNS > 2 ? 11 : 13,
+    fontSize: GRID_COLUMNS > 2 ? 12 : 14,
     fontWeight: "600",
-    lineHeight: GRID_COLUMNS > 2 ? 15 : 18,
+    lineHeight: GRID_COLUMNS > 2 ? 17 : 20,
   },
   // The web's `bg-gradient-to-t from-background/85 to-transparent`, restored:
   // the flat wash that stood in for it — React Native once had no gradient

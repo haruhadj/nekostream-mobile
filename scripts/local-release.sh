@@ -14,6 +14,9 @@
 set -euo pipefail
 
 MOBILE="$(cd "$(dirname "$0")/.." && pwd)"
+if [[ "$(uname -s)" == "Linux" ]]; then
+  source "$MOBILE/scripts/dev-env.sh"
+fi
 export ANDROID_HOME="${ANDROID_HOME:-C:/Users/haruhadj/scoop/apps/android-clt/current}"
 
 # Forced, not defaulted. The shell inherits JAVA_HOME=temurin-lts (JDK 25),
@@ -21,18 +24,30 @@ export ANDROID_HOME="${ANDROID_HOME:-C:/Users/haruhadj/scoop/apps/android-clt/cu
 #   Execution failed for task ':react-native-worklets:configureCMakeRelWithDebInfo'
 #   > WARNING: A restricted method in java.lang.System has been called
 # AGP for RN 0.86 wants 17. Override with NEKOSTREAM_JDK if that ever changes.
-export JAVA_HOME="${NEKOSTREAM_JDK:-C:/Users/haruhadj/scoop/apps/temurin17-jdk/current}"
+export JAVA_HOME="${NEKOSTREAM_JDK:-${JAVA_HOME:-C:/Users/haruhadj/scoop/apps/temurin17-jdk/current}}"
+export NEKOSTREAM_VARIANT=production
 
 KEYSTORE="$MOBILE/credentials/nekostream-release.keystore"
 PASS="${NEKOSTREAM_KEYSTORE_PASS:-nekostream}"
 BUILT="$MOBILE/android/app/build/outputs/apk/release/app-release.apk"
 SIGNED="$MOBILE/android/app/build/outputs/apk/release/nekostream-signed.apk"
-APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner.bat"
+APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+if [[ ! -x "$APKSIGNER" && -f "$APKSIGNER.bat" ]]; then
+  APKSIGNER="$APKSIGNER.bat"
+fi
 
 if [ ! -f "$KEYSTORE" ]; then
-  echo "No keystore at $KEYSTORE — generate one with keytool first." >&2
+  echo "Restore the original release keystore at $KEYSTORE to build an update compatible with the installed release." >&2
   exit 1
 fi
+
+if [[ ! -f "$APKSIGNER" ]]; then
+  echo "Android Build Tools 36.0.0 are required: $APKSIGNER is missing." >&2
+  exit 1
+fi
+
+cd "$MOBILE"
+npx expo prebuild --platform android --no-install
 
 cd "$MOBILE/android"
 

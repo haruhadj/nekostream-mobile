@@ -11,6 +11,8 @@
  * numbers twice.
  */
 
+import Feather from "@expo/vector-icons/Feather";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCallback, useState, type ReactNode } from "react";
 import {
   ActivityIndicator,
@@ -18,6 +20,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
 } from "react-native";
@@ -146,6 +149,7 @@ function TrackerDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const insets = useSafeAreaInsets();
   const providers = targetProviders(target);
   const { label } = TARGET[target];
 
@@ -163,7 +167,7 @@ function TrackerDialog({
         : target === "anilist"
           ? { syncAnilist: value }
           : { syncMal: value },
-    [target]
+    [target],
   );
 
   const handleSaved = useCallback(() => {
@@ -197,16 +201,16 @@ function TrackerDialog({
   return (
     <Modal visible animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.backdrop}>
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingBottom: insets.bottom + 8 }]}>
           <View style={styles.sheetHeader}>
             <Text style={styles.sheetTitle}>{label}</Text>
             <Pressable
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Close"
-              hitSlop={12}
+              style={styles.closeButton}
             >
-              <Text style={styles.close}>✕</Text>
+              <Feather name="x" size={22} color={theme.color.muted} />
             </Pressable>
           </View>
 
@@ -225,7 +229,7 @@ function TrackerDialog({
                     .map(([p, e]) =>
                       e.exists
                         ? `${PROVIDER_LABEL[p]}: ${e.progress}${e.totalEpisodes ? ` / ${e.totalEpisodes}` : ""}`
-                        : `${PROVIDER_LABEL[p]}: not on your list`
+                        : `${PROVIDER_LABEL[p]}: not on your list`,
                     )
                     .join("   ·   ")}
                 </Text>
@@ -242,9 +246,16 @@ function TrackerDialog({
                         progress: Math.max(0, f.progress - 1),
                       }))
                     }
-                    style={({ pressed }) => [styles.step, pressed && styles.pressed]}
+                    style={({ pressed }) => [
+                      styles.step,
+                      pressed && styles.pressed,
+                    ]}
                   >
-                    <Text style={styles.stepSymbol}>−</Text>
+                    <Feather
+                      name="minus"
+                      size={20}
+                      color={theme.color.accent}
+                    />
                   </Pressable>
 
                   <Text style={styles.progressValue}>
@@ -260,9 +271,12 @@ function TrackerDialog({
                     onPress={() =>
                       setForm((f) => ({ ...f, progress: f.progress + 1 }))
                     }
-                    style={({ pressed }) => [styles.step, pressed && styles.pressed]}
+                    style={({ pressed }) => [
+                      styles.step,
+                      pressed && styles.pressed,
+                    ]}
                   >
-                    <Text style={styles.stepSymbol}>+</Text>
+                    <Feather name="plus" size={20} color={theme.color.accent} />
                   </Pressable>
                 </View>
               </Field>
@@ -286,7 +300,10 @@ function TrackerDialog({
                         ]}
                       >
                         <Text
-                          style={[styles.optionText, selected && styles.optionTextOn]}
+                          style={[
+                            styles.optionText,
+                            selected && styles.optionTextOn,
+                          ]}
                         >
                           {option.label}
                         </Text>
@@ -304,7 +321,9 @@ function TrackerDialog({
                       <Pressable
                         key={value}
                         accessibilityRole="button"
-                        accessibilityLabel={value === 0 ? "No score" : `Score ${value}`}
+                        accessibilityLabel={
+                          value === 0 ? "No score" : `Score ${value}`
+                        }
                         accessibilityState={{ selected }}
                         onPress={() => setForm((f) => ({ ...f, score: value }))}
                         style={({ pressed }) => [
@@ -314,7 +333,10 @@ function TrackerDialog({
                         ]}
                       >
                         <Text
-                          style={[styles.optionText, selected && styles.optionTextOn]}
+                          style={[
+                            styles.optionText,
+                            selected && styles.optionTextOn,
+                          ]}
                         >
                           {value === 0 ? "–" : value}
                         </Text>
@@ -325,25 +347,23 @@ function TrackerDialog({
               </Field>
 
               <Field label="Automatic sync">
-                <Pressable
-                  accessibilityRole="switch"
-                  accessibilityState={{ checked: sync }}
-                  onPress={() => setSync((value) => !value)}
-                  style={({ pressed }) => [
-                    styles.switchRow,
-                    sync ? styles.switchOn : styles.optionOff,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <View style={[styles.switchTrack, sync && styles.trackOn]}>
-                    <View style={[styles.knob, sync && styles.knobOn]} />
-                  </View>
+                <View style={styles.switchRow}>
+                  <Switch
+                    value={sync}
+                    onValueChange={setSync}
+                    accessibilityLabel={`Automatic sync to ${syncLabel}`}
+                    trackColor={{
+                      false: theme.color.border,
+                      true: theme.color.accentContainer,
+                    }}
+                    thumbColor={sync ? theme.color.accent : theme.color.muted}
+                  />
                   <Text style={styles.switchText}>
                     {sync
-                      ? `Marking episodes here updates ${syncLabel}.`
-                      : `Marking episodes here does not touch ${syncLabel}.`}
+                      ? `Episode progress syncs to ${syncLabel}.`
+                      : `Episode progress stays local for ${syncLabel}.`}
                   </Text>
-                </Pressable>
+                </View>
               </Field>
 
               {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -400,7 +420,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    minHeight: 40,
+    minHeight: 48,
     paddingHorizontal: 14,
     borderRadius: 999,
     borderWidth: 1,
@@ -435,7 +455,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: theme.color.border,
   },
-  sheetTitle: { color: theme.color.foreground, fontSize: 16, fontWeight: "700" },
+  sheetTitle: {
+    color: theme.color.foreground,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  closeButton: {
+    minWidth: 48,
+    minHeight: 48,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   close: { color: theme.color.muted, fontSize: 18 },
   loading: { padding: 40, alignItems: "center", gap: 12 },
   form: { padding: 20, gap: 20 },
@@ -449,15 +479,19 @@ const styles = StyleSheet.create({
   },
   stepperRow: { flexDirection: "row", alignItems: "center", gap: 14 },
   step: {
-    height: 44,
-    width: 44,
+    height: 48,
+    width: 48,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: theme.color.border,
     alignItems: "center",
     justifyContent: "center",
   },
-  stepSymbol: { color: theme.color.foreground, fontSize: 20, fontWeight: "600" },
+  stepSymbol: {
+    color: theme.color.foreground,
+    fontSize: 20,
+    fontWeight: "600",
+  },
   progressValue: {
     color: theme.color.foreground,
     fontSize: 18,
@@ -467,15 +501,15 @@ const styles = StyleSheet.create({
   muted: { color: theme.color.muted, fontWeight: "400" },
   optionWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   option: {
-    minHeight: 40,
+    minHeight: 48,
     justifyContent: "center",
     paddingHorizontal: 14,
     borderRadius: 10,
     borderWidth: 1,
   },
   score: {
-    height: 40,
-    width: 40,
+    height: 48,
+    width: 48,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 10,
@@ -489,7 +523,11 @@ const styles = StyleSheet.create({
     backgroundColor: theme.color.surface,
     borderColor: theme.color.border,
   },
-  optionText: { color: theme.color.foreground, fontSize: 13, fontWeight: "600" },
+  optionText: {
+    color: theme.color.foreground,
+    fontSize: 13,
+    fontWeight: "600",
+  },
   optionTextOn: { color: theme.color.accentForeground },
   switchRow: {
     flexDirection: "row",
@@ -499,7 +537,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
   },
-  switchOn: { backgroundColor: "#6366f11a", borderColor: theme.color.accent },
+  switchOn: {
+    backgroundColor: theme.color.accentContainer,
+    borderColor: theme.color.accent,
+  },
   switchTrack: {
     width: 40,
     height: 24,

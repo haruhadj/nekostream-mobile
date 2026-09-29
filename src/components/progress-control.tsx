@@ -18,6 +18,7 @@
  * will actually buy something.
  */
 
+import Feather from "@expo/vector-icons/Feather";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -31,11 +32,11 @@ import type { SyncOutcome } from "@/sync/progress";
  * union and `Array.filter` does not narrow on its own.
  */
 const isFailure = (
-  outcome: SyncOutcome
+  outcome: SyncOutcome,
 ): outcome is Extract<SyncOutcome, { ok: false }> => !outcome.ok;
 
 const isSkipped = (
-  outcome: SyncOutcome
+  outcome: SyncOutcome,
 ): outcome is Extract<SyncOutcome, { skipped: true }> =>
   outcome.ok && outcome.skipped === true;
 
@@ -63,7 +64,7 @@ export function ProgressControl({
       setOutcomes(await onChange(Math.max(0, next)));
     } catch (thrown) {
       setError(
-        thrown instanceof Error ? thrown.message : "Could not save progress."
+        thrown instanceof Error ? thrown.message : "Could not save progress.",
       );
     } finally {
       setSaving(false);
@@ -110,14 +111,19 @@ export function ProgressControl({
         <StepButton
           label="Increase progress"
           symbol="+"
-          disabled={saving}
+          disabled={
+            saving || (totalEpisodes !== null && progress >= totalEpisodes)
+          }
           onPress={() => void step(progress + 1)}
         />
       </View>
 
       {status ? (
         <Text
-          style={[styles.status, failures.length > 0 || error ? styles.bad : null]}
+          style={[
+            styles.status,
+            failures.length > 0 || error ? styles.bad : null,
+          ]}
           accessibilityLiveRegion="polite"
         >
           {status}
@@ -153,7 +159,11 @@ function StepButton({
         disabled && styles.disabled,
       ]}
     >
-      <Text style={styles.stepSymbol}>{symbol}</Text>
+      <Feather
+        name={symbol === "+" ? "plus" : "minus"}
+        size={22}
+        color={theme.color.accent}
+      />
     </Pressable>
   );
 }
@@ -163,17 +173,17 @@ const styles = StyleSheet.create({
   stepper: {
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "flex-start",
+    alignSelf: "stretch",
     borderRadius: 999,
     borderWidth: 1,
     borderColor: theme.color.border,
-    backgroundColor: theme.color.surface,
+    backgroundColor: theme.color.background,
     padding: 4,
   },
   step: {
-    height: 44,
-    width: 44,
-    borderRadius: 22,
+    height: 48,
+    width: 48,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -186,6 +196,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   count: {
+    flex: 1,
     minWidth: 80,
     textAlign: "center",
     color: theme.color.foreground,

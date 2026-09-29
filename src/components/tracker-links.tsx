@@ -16,7 +16,11 @@ import Feather from "@expo/vector-icons/Feather";
 import { Image } from "expo-image";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { anilistAnimeUrl, malAnimeUrl, PROVIDER_LABEL } from "@shared/providers";
+import {
+  anilistAnimeUrl,
+  malAnimeUrl,
+  PROVIDER_LABEL,
+} from "@shared/providers";
 
 import { theme } from "@/theme";
 import { ANILIST_MARK, MAL_MARK } from "@/ui/tracker-marks";
@@ -96,9 +100,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    minHeight: 44,
+    minHeight: 48,
     paddingHorizontal: 14,
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
   },
   pressed: { opacity: 0.75 },

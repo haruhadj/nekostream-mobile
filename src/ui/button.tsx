@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   base: {
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 8,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: "transparent",
   },
@@ -90,8 +90,8 @@ const styles = StyleSheet.create({
 });
 
 const sizeStyles = StyleSheet.create({
-  sm: { minHeight: 36, paddingHorizontal: 14 },
-  default: { minHeight: 44, paddingHorizontal: 16 },
+  sm: { minHeight: 48, paddingHorizontal: 16 },
+  default: { minHeight: 48, paddingHorizontal: 20 },
 });
 
 const textSizeStyles = StyleSheet.create({
@@ -110,7 +110,7 @@ const variantStyles = StyleSheet.create({
     backgroundColor: theme.color.surface,
     borderColor: theme.color.border,
   },
-  ghost: { backgroundColor: theme.color.surface },
+  ghost: { backgroundColor: "transparent" },
 });
 
 /** Named once so the label and the busy spinner can't drift apart. */

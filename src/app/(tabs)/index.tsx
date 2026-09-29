@@ -1,3 +1,5 @@
+import Feather from "@expo/vector-icons/Feather";
+import { WatchingShelf } from "@/components/watching-shelf";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -30,7 +32,11 @@ import {
   SCREEN_PADDING,
 } from "@/ui/screen";
 
-import { applyFilter, FILTERS, type LibraryFilter } from "@shared/library/filters";
+import {
+  applyFilter,
+  FILTERS,
+  type LibraryFilter,
+} from "@shared/library/filters";
 import { SORTS, sortEntries } from "@shared/library/sort";
 
 /**
@@ -55,7 +61,7 @@ export default function LibraryScreen() {
 
   const { data, loading, error, refreshing, refresh, reload } = useQuery(
     listEntries,
-    "Could not read your library."
+    "Could not read your library.",
   );
 
   const { state: syncState, run: runSync } = useAniListSync();
@@ -84,7 +90,7 @@ export default function LibraryScreen() {
   // and small enough that filtering in memory beats six more requests.
   const countFor = useCallback(
     (filter: LibraryFilter) => applyFilter(entries, filter).length,
-    [entries]
+    [entries],
   );
 
   const visible = useMemo(() => {
@@ -95,7 +101,7 @@ export default function LibraryScreen() {
     return sorted.filter((entry) =>
       [entry.titleRomaji, entry.titleEnglish]
         .filter((title): title is string => Boolean(title))
-        .some((title) => title.toLowerCase().includes(trimmed))
+        .some((title) => title.toLowerCase().includes(trimmed)),
     );
   }, [entries, active, sort, query]);
 
@@ -200,7 +206,8 @@ export default function LibraryScreen() {
         ListHeaderComponent={
           <View>
             <ScreenTitle
-              title="Library"
+              title="Your library"
+              subtitle="A little world of anime, all yours."
               trailing={
                 <Text style={styles.count}>
                   {visible.length} {visible.length === 1 ? "title" : "titles"}
@@ -209,6 +216,9 @@ export default function LibraryScreen() {
             />
 
             <SyncNotice state={syncState} error={error} />
+            {!query.trim() && activeKey === "all" ? (
+              <WatchingShelf entries={entries} />
+            ) : null}
 
             {entries.length > 0 ? (
               <>
@@ -223,7 +233,8 @@ export default function LibraryScreen() {
                   <Input
                     value={query}
                     onChangeText={setQuery}
-                    placeholder="Filter your library"
+                    icon="search"
+                    placeholder="Find in your library"
                     autoCorrect={false}
                     clearButtonMode="while-editing"
                     style={styles.search}
@@ -238,9 +249,11 @@ export default function LibraryScreen() {
                       pressed && styles.pressed,
                     ]}
                   >
-                    <Text style={styles.sortLabel} numberOfLines={1}>
-                      {sortLabel}
-                    </Text>
+                    <Feather
+                      name="sliders"
+                      size={18}
+                      color={theme.color.accent}
+                    />
                   </Pressable>
                 </View>
               </>
@@ -260,7 +273,7 @@ export default function LibraryScreen() {
 
       <OptionSheet
         visible={sortOpen}
-        title="Sort"
+        title="Sort your library"
         options={SORTS}
         selected={sort}
         onSelect={chooseSort}
@@ -347,14 +360,15 @@ const styles = StyleSheet.create({
   },
   search: { flex: 1 },
   sortButton: {
-    minHeight: 44,
+    minHeight: 48,
     justifyContent: "center",
     paddingHorizontal: 14,
-    borderRadius: 8,
+    alignItems: "center",
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: theme.color.border,
     backgroundColor: theme.color.surface,
-    maxWidth: 150,
+    width: 48,
   },
   sortLabel: { color: theme.color.foreground, fontSize: 12, fontWeight: "600" },
   pressed: { opacity: 0.75 },

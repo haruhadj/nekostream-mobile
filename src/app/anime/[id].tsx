@@ -7,16 +7,11 @@
  * app is worth having on a phone at all: the magnet button.
  */
 
+import Feather from "@expo/vector-icons/Feather";
 import { Image } from "expo-image";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { mediaById, type AniListMedia } from "@shared/anilist/queries";
 import type { SavedFilter } from "@shared/nyaa/filter";
@@ -24,6 +19,7 @@ import type { SavedFilter } from "@shared/nyaa/filter";
 import { AiringBadge } from "@/components/airing-badge";
 import { EpisodeList } from "@/components/episode-list";
 import { NyaaFilterPanel } from "@/components/nyaa-filter-panel";
+import { NyaaSearch } from "@/components/nyaa-search";
 import { ProgressControl } from "@/components/progress-control";
 import { TrackerEditors } from "@/components/tracker-editor";
 import { TrackerLinks } from "@/components/tracker-links";
@@ -48,10 +44,16 @@ export default function AnimeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const now = useNow();
+  const [section, setSection] = useState<"episodes" | "about">("episodes");
   const { mal } = useAuth();
 
   const load = useCallback(() => entryById(id), [id]);
-  const { data: entry, loading, setData, reload } = useQuery(load, "Not found.");
+  const {
+    data: entry,
+    loading,
+    setData,
+    reload,
+  } = useQuery(load, "Not found.");
 
   // AniList's own copy — description, genres, score. Fetched separately
   // because none of it is worth storing per entry (see viewerLibrary's own
@@ -84,7 +86,7 @@ export default function AnimeDetailScreen() {
       if (result.entry) setData(result.entry);
       return result.outcomes;
     },
-    [entry, setData]
+    [entry, setData],
   );
 
   /* ---------------------------------------------------------------- *
@@ -105,7 +107,10 @@ export default function AnimeDetailScreen() {
     let cancelled = false;
 
     void (async () => {
-      const [saved, rows] = await Promise.all([getFilter(id), listEpisodes(id)]);
+      const [saved, rows] = await Promise.all([
+        getFilter(id),
+        listEpisodes(id),
+      ]);
       if (cancelled) return;
       setFilter(saved);
       setEpisodes(rows);
@@ -136,7 +141,7 @@ export default function AnimeDetailScreen() {
       await reloadNyaa();
       return message;
     },
-    [id, reloadNyaa]
+    [id, reloadNyaa],
   );
 
   const onRemoveFilter = useCallback(async () => {
@@ -165,7 +170,7 @@ export default function AnimeDetailScreen() {
         setMarking(false);
       }
     },
-    [onChange]
+    [onChange],
   );
 
   if (loading) {
@@ -193,15 +198,23 @@ export default function AnimeDetailScreen() {
 
   return (
     <Screen>
-      <Stack.Screen options={{ title: entry.titleEnglish ?? entry.titleRomaji }} />
+      <Stack.Screen
+        options={{ title: entry.titleEnglish ?? entry.titleRomaji }}
+      />
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      >
         <Pressable
           onPress={() => router.back()}
           accessibilityRole="button"
+          accessibilityLabel="Go back"
           style={styles.back}
         >
-          <Text style={styles.link}>← Library</Text>
+          <Feather name="arrow-left" size={20} color={theme.color.foreground} />
+          <Text style={styles.link}>Back</Text>
         </Pressable>
 
         <View style={styles.header}>
@@ -242,51 +255,102 @@ export default function AnimeDetailScreen() {
         </View>
 
         <View style={styles.controls}>
+          <Text style={styles.progressHeading}>Your progress</Text>
+          {entry.totalEpisodes ? (
+            <View style={styles.progressTrack}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${Math.min(entry.progress / entry.totalEpisodes, 1) * 100}%`,
+                  },
+                ]}
+              />
+            </View>
+          ) : null}
           <ProgressControl
             progress={entry.progress}
             totalEpisodes={entry.totalEpisodes}
             onChange={onChange}
           />
+        </View>
 
-          {/* The manual override: what each tracker actually holds, editable
-              field by field — distinct from the stepper above, which only
-              pushes progress. */}
-          <TrackerEditors
-            entry={entry}
-            malLinked={mal !== null}
-            onSaved={() => void reload()}
+        <View style={styles.tabs} accessibilityRole="tablist">
+          {(["episodes", "about"] as const).map((tab) => (
+            <Pressable
+              key={tab}
+              onPress={() => setSection(tab)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: section === tab }}
+              style={[styles.tab, section === tab && styles.tabActive]}
+            >
+              <Text
+                style={[
+                  styles.tabLabel,
+                  section === tab && styles.tabLabelActive,
+                ]}
+              >
+                {tab === "episodes" ? "Episodes" : "About & trackers"}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <View style={section === "episodes" ? undefined : { display: "none" }}>
+          <NyaaSearch
+            key={entry.id}
+            english={entry.titleEnglish}
+            romaji={entry.titleRomaji}
           />
         </View>
 
-        <TrackerLinks
-          anilistMediaId={entry.anilistMediaId}
-          malMediaId={entry.malMediaId}
-        />
-
-        {media?.genres?.length ? (
-          <Text style={styles.genres}>{media.genres.join(" · ")}</Text>
-        ) : null}
-
-        {media?.description ? (
-          <Text style={styles.description}>{stripHtml(media.description)}</Text>
-        ) : null}
-
-        <NyaaFilterPanel
-          defaultTitle={entry.titleRomaji}
-          savedFilter={filter}
-          onSave={onSaveFilter}
-          onRemove={onRemoveFilter}
-        />
-
-        <EpisodeList
-          episodes={episodes}
-          progress={entry.progress}
-          lastFetchedAt={filter?.lastFetchedAt ?? null}
-          hasFilter={filter !== null}
-          busy={marking}
-          onRefresh={onRefreshEpisodes}
-          onMarkWatched={onMarkWatched}
-        />
+        {section === "episodes" ? (
+          <>
+            <EpisodeList
+              episodes={episodes}
+              progress={entry.progress}
+              lastFetchedAt={filter?.lastFetchedAt ?? null}
+              hasFilter={filter !== null}
+              busy={marking}
+              onRefresh={onRefreshEpisodes}
+              onMarkWatched={onMarkWatched}
+            />
+            <NyaaFilterPanel
+              defaultTitle={entry.titleRomaji}
+              savedFilter={filter}
+              onSave={onSaveFilter}
+              onRemove={onRemoveFilter}
+            />
+          </>
+        ) : (
+          <>
+            {media?.genres?.length ? (
+              <Text style={styles.genres}>{media.genres.join(" · ")}</Text>
+            ) : null}
+            {media?.description ? (
+              <Text style={styles.description}>
+                {stripHtml(media.description)}
+              </Text>
+            ) : (
+              <Text style={styles.subtitle}>
+                A synopsis will appear when anime details are available.
+              </Text>
+            )}
+            <Text style={styles.progressHeading}>Manage your trackers</Text>
+            <Text style={styles.subtitle}>
+              Update status, score, and sync preferences.
+            </Text>
+            <TrackerEditors
+              entry={entry}
+              malLinked={mal !== null}
+              onSaved={() => void reload()}
+            />
+            <TrackerLinks
+              anilistMediaId={entry.anilistMediaId}
+              malMediaId={entry.malMediaId}
+            />
+          </>
+        )}
       </ScrollView>
     </Screen>
   );
@@ -305,12 +369,30 @@ function stripHtml(text: string): string {
 }
 
 const styles = StyleSheet.create({
+  progressHeading: { ...theme.type.section, color: theme.color.foreground },
+  progressTrack: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: theme.color.border,
+    overflow: "hidden",
+  },
+  progressFill: { height: "100%", backgroundColor: theme.color.accent },
+  tabs: { flexDirection: "row", gap: 8 },
+  tab: {
+    flex: 1,
+    minHeight: 48,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 12,
+    backgroundColor: theme.color.surface,
+  },
+  tabActive: { backgroundColor: theme.color.accentContainer },
+  tabLabel: { ...theme.type.label, color: theme.color.muted },
+  tabLabelActive: { color: theme.color.accent },
   controls: {
     gap: 14,
     padding: 16,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.color.border,
     backgroundColor: theme.color.surface,
   },
   content: {
@@ -319,11 +401,18 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     gap: 20,
   },
-  back: { alignSelf: "flex-start" },
-  link: { color: theme.color.accent, fontSize: 14, fontWeight: "600" },
+  back: {
+    alignSelf: "flex-start",
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingRight: 16,
+  },
+  link: { color: theme.color.foreground, fontSize: 14, fontWeight: "600" },
   header: { flexDirection: "row", gap: 16 },
   posterFrame: {
-    width: 116,
+    width: 104,
     aspectRatio: 2 / 3,
     borderRadius: 10,
     overflow: "hidden",
@@ -333,9 +422,7 @@ const styles = StyleSheet.create({
   headerText: { flex: 1, gap: 6 },
   title: {
     color: theme.color.foreground,
-    fontSize: 20,
-    fontWeight: "700",
-    lineHeight: 26,
+    ...theme.type.title,
   },
   subtitle: { color: theme.color.muted, fontSize: 13, lineHeight: 18 },
   meta: { color: theme.color.muted, fontSize: 12 },

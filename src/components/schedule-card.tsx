@@ -78,7 +78,7 @@ export function ScheduleCard({
   return (
     <View style={styles.wrapper}>
       {airingNext ? (
-        <Badge label="Airing Next" variant="accent" style={styles.nextBadge} />
+        <Badge label="Up next" variant="accent" style={styles.nextBadge} />
       ) : null}
 
       <Pressable
@@ -106,7 +106,7 @@ export function ScheduleCard({
         </View>
 
         <View style={styles.body}>
-          <Text style={styles.title} numberOfLines={1}>
+          <Text style={styles.title} numberOfLines={2}>
             {entry.titleEnglish ?? entry.titleRomaji}
           </Text>
 
@@ -137,10 +137,17 @@ export function ScheduleCard({
           )}
 
           <View style={styles.airRow}>
-            <View style={[styles.dot, hasAired ? styles.dotAired : styles.dotUpcoming]} />
+            <View
+              style={[
+                styles.dot,
+                hasAired ? styles.dotAired : styles.dotUpcoming,
+              ]}
+            />
             <Text style={styles.muted}>
               {hasAired ? "Aired" : `Ep ${entry.nextAiringEpisode} airs`} at{" "}
-              <Text style={styles.time}>{TIME_FORMAT.format(entry.airingAt)}</Text>
+              <Text style={styles.time}>
+                {TIME_FORMAT.format(entry.airingAt)}
+              </Text>
             </Text>
           </View>
 
@@ -162,17 +169,15 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 12,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.color.border,
     backgroundColor: theme.color.surface,
   },
   // An unwatched aired episode is the reason to open this show at all, so
   // those cards carry the signal out to their edge.
-  cardBehind: { borderColor: theme.color.amberBorder },
+  cardBehind: { backgroundColor: theme.color.surfaceRaised },
   pressed: { opacity: 0.75 },
   cover: {
-    width: 40,
-    height: 56,
+    width: 64,
+    height: 96,
     borderRadius: 8,
     overflow: "hidden",
     borderWidth: 1,
@@ -180,7 +185,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.color.background,
   },
   body: { flex: 1, minWidth: 0 },
-  title: { color: theme.color.foreground, fontSize: 14, fontWeight: "600" },
+  title: { color: theme.color.foreground, ...theme.type.label },
   barTrack: {
     position: "relative",
     marginTop: 8,
