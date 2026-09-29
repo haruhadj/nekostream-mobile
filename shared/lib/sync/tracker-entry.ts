@@ -8,7 +8,7 @@
 
 // Relative, not "@/lib/*": this module is shared with the mobile client
 // through @shared/*, where "@/" means *its* src/. Same files either way — see
-// context/architecture.md's Dependency direction.
+// The mobile repository vendors portable modules from the server repository.
 import { anilistRequest } from "../anilist/client";
 import { malFetch } from "../mal/client";
 import {

@@ -1,7 +1,7 @@
 /**
  * URL and form encoding for the OAuth flows — deliberately free of any
  * `expo-*` import, so it can be exercised outside the app (see the Phase 2
- * verification in `context/progress-tracker.md`). `oauth.ts` holds the parts
+ * verification in this project's history). `oauth.ts` holds the parts
  * that genuinely need the device: randomness and the browser.
  *
  * Hand-rolled rather than `URL`/`URLSearchParams`, because React Native ships

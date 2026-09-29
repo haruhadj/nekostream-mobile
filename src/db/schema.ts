@@ -16,7 +16,7 @@ import {
  *     `stremio_token` tables.** A device has exactly one user, so a column
  *     enforcing an invariant that cannot be violated here is ceremony. This
  *     does *not* relax the server's rule — every query there stays scoped to
- *     the caller (see ../../../context/architecture.md).
+ *     the caller.
  *  2. **Ids default to a SQLite-generated value** rather than being written
  *     by the caller. See `deviceId` below.
  *

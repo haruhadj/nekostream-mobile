@@ -11,7 +11,7 @@ consoles as `nekostream://auth/anilist` and `nekostream://auth/mal`
 (`src/auth/config.ts`), and Expo Go does not own that scheme, so the callback
 never comes back and AniList sign-in gates the whole app. Expo Go also refuses
 SDK 57 projects outright, with *"Project is incompatible with this version of
-Expo Go."* `context/tech-stack.md` records the same decision.
+Expo Go."*
 
 ## Prerequisites
 
@@ -49,7 +49,7 @@ around 20 minutes for the first run; it is the only slow step.
 If you want the build without the interactive dev server:
 
 ```bash
-cd mobile/android && ./gradlew installDebug
+cd android && ./gradlew installDebug
 ```
 
 ### 2. Iterate (every session after that)

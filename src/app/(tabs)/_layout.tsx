@@ -2,7 +2,7 @@ import Feather from "@expo/vector-icons/Feather";
 // `Tabs` re-exported from "expo-router" itself is deprecated in SDK 57 — this
 // is the same stable JS tab navigator under its current name. Deliberately not
 // `expo-router/unstable-native-tabs`, which is what the SDK 57 template
-// scaffolds; see ../context/progress-tracker.md's decision log.
+// scaffolds; use the Expo SDK 57 API.
 import { Tabs } from "expo-router/js-tabs";
 
 import { theme } from "@/theme";

@@ -11,7 +11,7 @@ import type { Config } from "drizzle-kit";
  * here connects to a database — the migrations run on the phone.
  *
  * Per AGENTS.md, files under `drizzle/` are generated and never hand-edited.
- * That rule now applies in two places: run `npm run db:generate` in `mobile/`
+ * Run `npm run db:generate` from the repository root
  * after changing `src/db/schema.ts`.
  */
 export default {

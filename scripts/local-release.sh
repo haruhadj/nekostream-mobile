@@ -39,7 +39,7 @@ cd "$MOBILE/android"
 # Force the JS to be re-bundled.
 #
 # `createBundleReleaseJsAndAssets` reported UP-TO-DATE after a change to
-# mobile/src/, and shipped an APK whose native side was fresh and whose
+# src/, and shipped an APK whose native side was fresh and whose
 # JavaScript was one build old — which looks exactly like "the fix did not
 # work" on the device. Deleting its output is cheaper than diagnosing the
 # task's input tracking, and re-bundling costs seconds.

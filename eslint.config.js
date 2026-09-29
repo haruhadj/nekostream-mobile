@@ -1,8 +1,8 @@
 // This is a React Native/Expo project, not the Next.js web app — it gets
 // its own lint setup rather than joining the root eslint.config.mjs (which
-// is scoped away from mobile/**, see that file's ignores). Prettier
+// is scoped to this standalone project's React Native runtime. Prettier
 // formatting is still shared: prettier discovers the repo-root .prettierrc
-// automatically since there's no closer one in mobile/.
+// automatically since there's no closer config in this project.
 //
 // Deliberately not type-aware (no parserOptions.project), matching
 // eslint-config-expo's own default — wiring up a type-checked lint pass

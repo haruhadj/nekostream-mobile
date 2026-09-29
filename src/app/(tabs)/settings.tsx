@@ -18,7 +18,7 @@ import { Screen, ScreenTitle, SCREEN_PADDING } from "@/ui/screen";
  *
  * The notification toggle and the Stremio addon are not coming here. Email
  * needs SMTP and Stremio needs an addon URL — both are the server's, and this
- * client no longer has one (see context/functionality.md).
+ * client no longer has one.
  */
 export default function SettingsScreen() {
   const { anilist, mal, linkMal, unlinkMal, signOut } = useAuth();
