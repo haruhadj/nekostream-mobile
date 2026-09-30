@@ -208,6 +208,7 @@ export default function LibraryScreen() {
             <ScreenTitle
               title="Your library"
               subtitle="A little world of anime, all yours."
+              showBrand
               trailing={
                 <Text style={styles.count}>
                   {visible.length} {visible.length === 1 ? "title" : "titles"}

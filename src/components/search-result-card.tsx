@@ -1,3 +1,4 @@
+import Feather from "@expo/vector-icons/Feather";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -73,19 +74,9 @@ export function SearchResultCard({
             {media.title.english ?? media.title.romaji}
           </Text>
         </Pressable>
-        {media.title.english && media.title.english !== media.title.romaji ? (
-          <Text style={styles.romaji} numberOfLines={1}>
-            {media.title.romaji}
-          </Text>
-        ) : null}
         <Text style={styles.meta} numberOfLines={1}>
           {meta || "Anime"}
         </Text>
-        {media.genres?.length ? (
-          <Text style={styles.genres} numberOfLines={1}>
-            {media.genres.slice(0, 2).join(" · ")}
-          </Text>
-        ) : null}
         <View style={styles.actions}>
           <Button
             label={inLibrary ? "In library" : "Add"}
@@ -96,12 +87,14 @@ export function SearchResultCard({
             busy={addState === "adding"}
             style={styles.add}
           />
-          <Button
-            label={inLibrary ? "Open" : "Details"}
-            variant="ghost"
-            size="sm"
+          <Pressable
             onPress={onOpen}
-          />
+            accessibilityRole="button"
+            accessibilityLabel={`View ${media.title.english ?? media.title.romaji} details`}
+            style={({ pressed }) => [styles.detailAction, pressed && styles.pressed]}
+          >
+            <Feather name="arrow-up-right" size={20} color={theme.color.muted} />
+          </Pressable>
         </View>
       </View>
     </View>
@@ -116,11 +109,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: theme.color.surface,
   },
-  posterTap: { width: 96, alignSelf: "stretch" },
+  posterTap: { width: 88, height: 132 },
   poster: {
     width: "100%",
-    height: "100%",
-    minHeight: 150,
+    height: 132,
     borderRadius: 10,
     backgroundColor: theme.color.surfaceRaised,
   },
@@ -137,15 +129,19 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   title: { ...theme.type.label, color: theme.color.foreground, fontSize: 15 },
-  romaji: { ...theme.type.caption, color: theme.color.muted },
   meta: { ...theme.type.caption, color: theme.color.muted },
-  genres: { ...theme.type.caption, color: theme.color.muted },
   actions: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: "auto",
+    marginTop: 4,
     gap: 4,
   },
   add: { minWidth: 96 },
+  detailAction: {
+    width: 48,
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   pressed: { opacity: 0.75 },
 });

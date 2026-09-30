@@ -1,9 +1,7 @@
 import Feather from "@expo/vector-icons/Feather";
-import { useRouter } from "expo-router";
 import type { ReactNode } from "react";
 import {
   ActivityIndicator,
-  Pressable,
   StyleSheet,
   Text,
   View,
@@ -25,25 +23,20 @@ export function ScreenTitle({
   title,
   subtitle,
   trailing,
+  showBrand = false,
 }: {
   title: string;
   subtitle?: string;
   trailing?: ReactNode;
+  showBrand?: boolean;
 }) {
-  const router = useRouter();
   return (
     <View style={styles.header}>
-      <View style={styles.appBar}>
-        <Wordmark />
-        <Pressable
-          onPress={() => router.push("/settings")}
-          accessibilityRole="button"
-          accessibilityLabel="Your accounts and settings"
-          style={({ pressed }) => [styles.account, pressed && styles.pressed]}
-        >
-          <Feather name="user" size={20} color={theme.color.accent} />
-        </Pressable>
-      </View>
+      {showBrand ? (
+        <View style={styles.appBar}>
+          <Wordmark />
+        </View>
+      ) : null}
       <View style={styles.titleRow}>
         <Text accessibilityRole="header" style={styles.title}>
           {title}
@@ -116,18 +109,8 @@ const styles = StyleSheet.create({
     minHeight: 56,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     marginBottom: 12,
   },
-  account: {
-    width: 48,
-    height: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 24,
-    backgroundColor: theme.color.surface,
-  },
-  pressed: { opacity: 0.7 },
   titleRow: {
     flexDirection: "row",
     alignItems: "center",

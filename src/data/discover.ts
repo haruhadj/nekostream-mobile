@@ -53,6 +53,7 @@ export async function discoverAnime({
   format?: DiscoverFormat;
   sort?: DiscoverSort;
 } = {}): Promise<DiscoverPage> {
+  const formatIn = FORMAT_VALUES[format];
   const data = await anilistRequest<{ Page: DiscoverPage }>(
     `query (
       $page: Int, $search: String, $season: MediaSeason,
@@ -76,11 +77,13 @@ export async function discoverAnime({
     }`,
     {
       page,
-      search,
-      season,
-      seasonYear,
-      status,
-      formatIn: FORMAT_VALUES[format],
+      // AniList currently returns HTTP 500 for format_in: null. Omit unused
+      // filters so the default "All" view and unfiltered search still load.
+      ...(search ? { search } : {}),
+      ...(season ? { season } : {}),
+      ...(seasonYear ? { seasonYear } : {}),
+      ...(status ? { status } : {}),
+      ...(formatIn ? { formatIn } : {}),
       sort: [sort],
     },
   );

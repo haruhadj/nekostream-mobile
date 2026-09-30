@@ -1,14 +1,19 @@
 import Feather from "@expo/vector-icons/Feather";
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps } from "react";
 import {
+  Animated,
+  Easing,
   FlatList,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
   SearchResultCard,
@@ -33,6 +38,18 @@ import { EmptyState, Screen, ScreenTitle, SCREEN_PADDING } from "@/ui/screen";
 
 type BrowseMode = "season" | "airing" | "upcoming" | "trending";
 type Snapshot = { key: string; page: DiscoverPage };
+
+const BROWSE_MODES: {
+  value: BrowseMode;
+  label: string;
+  detail: string;
+  icon: ComponentProps<typeof Feather>["name"];
+}[] = [
+  { value: "season", label: "Season", detail: "Browse a release season", icon: "calendar" },
+  { value: "airing", label: "Airing", detail: "Shows releasing now", icon: "radio" },
+  { value: "upcoming", label: "Upcoming", detail: "Find what starts next", icon: "clock" },
+  { value: "trending", label: "Trending", detail: "Popular on AniList", icon: "trending-up" },
+];
 
 const SEASONS: { label: string; value: DiscoverSeason }[] = [
   { label: "Winter", value: "WINTER" },
@@ -62,6 +79,10 @@ function seasonAt(index: number) {
 
 export default function SearchScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
+  const drawerWidth = Math.min(340, windowWidth - 40);
+  const drawerX = useRef(new Animated.Value(-360)).current;
   const now = useNow();
   const [baseSeason] = useState(() => {
     const date = new Date();
@@ -71,6 +92,10 @@ export default function SearchScreen() {
   const [mode, setMode] = useState<BrowseMode>("season");
   const [format, setFormat] = useState<DiscoverFormat>("all");
   const [sort, setSort] = useState<DiscoverSort>("POPULARITY_DESC");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [draftMode, setDraftMode] = useState<BrowseMode>("season");
+  const [draftFormat, setDraftFormat] = useState<DiscoverFormat>("all");
+  const [draftSort, setDraftSort] = useState<DiscoverSort>("POPULARITY_DESC");
   const [query, setQuery] = useState("");
   const [attempt, setAttempt] = useState(0);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
@@ -299,7 +324,36 @@ export default function SearchScreen() {
         : mode === "upcoming"
           ? "Coming soon"
           : "Trending now";
-  const count = visible?.pageInfo.total ?? 0;
+  const filterActive = format !== "all" || sort !== "POPULARITY_DESC";
+  const openDrawer = () => {
+    setDraftMode(mode);
+    setDraftFormat(format);
+    setDraftSort(sort);
+    drawerX.setValue(-drawerWidth);
+    setDrawerOpen(true);
+    Animated.timing(drawerX, {
+      toValue: 0,
+      duration: 220,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  };
+  const closeDrawer = () => {
+    Animated.timing(drawerX, {
+      toValue: -drawerWidth,
+      duration: 180,
+      easing: Easing.in(Easing.cubic),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) setDrawerOpen(false);
+    });
+  };
+  const applyDrawer = () => {
+    setMode(draftMode);
+    setFormat(draftFormat);
+    setSort(draftSort);
+    closeDrawer();
+  };
 
   return (
     <Screen>
@@ -321,7 +375,20 @@ export default function SearchScreen() {
         )}
         ListHeaderComponent={
           <View style={styles.header}>
-            <ScreenTitle title="Discover" subtitle="Find what to watch next." />
+            <ScreenTitle
+              title="Discover"
+              trailing={!trimmed ? (
+                <Pressable
+                  onPress={openDrawer}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open Discover menu"
+                  style={({ pressed }) => [styles.menuButton, pressed && styles.pressed]}
+                >
+                  <Feather name="menu" size={24} color={theme.color.foreground} />
+                  {filterActive || mode !== "season" ? <View style={styles.menuDot} /> : null}
+                </Pressable>
+              ) : null}
+            />
             <Input
               value={query}
               onChangeText={setQuery}
@@ -353,132 +420,54 @@ export default function SearchScreen() {
               />
             ) : null}
 
-            {!trimmed ? (
-              <>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.modeRow}
-                >
-                  <ChoiceChip
-                    label="Season"
-                    selected={mode === "season"}
-                    onPress={() => setMode("season")}
-                  />
-                  <ChoiceChip
-                    label="Airing"
-                    selected={mode === "airing"}
-                    onPress={() => setMode("airing")}
-                  />
-                  <ChoiceChip
-                    label="Upcoming"
-                    selected={mode === "upcoming"}
-                    onPress={() => setMode("upcoming")}
-                  />
-                  <ChoiceChip
-                    label="Trending"
-                    selected={mode === "trending"}
-                    onPress={() => setMode("trending")}
-                  />
-                </ScrollView>
-
-                {mode === "season" ? (
-                  <View style={styles.seasonRow}>
-                    <Pressable
-                      onPress={() => setSeasonOffset((value) => value - 1)}
-                      accessibilityRole="button"
-                      accessibilityLabel="Previous anime season"
-                      style={styles.seasonArrow}
-                    >
-                      <Feather
-                        name="chevron-left"
-                        size={22}
-                        color={theme.color.foreground}
-                      />
-                    </Pressable>
-                    <View style={styles.seasonCenter}>
-                      <Text style={styles.seasonLabel}>
-                        {season.label} {season.year}
-                      </Text>
-                      {seasonOffset !== 0 ? (
-                        <Pressable
-                          onPress={() => setSeasonOffset(0)}
-                          accessibilityRole="button"
-                        >
-                          <Text style={styles.seasonReset}>
-                            Back to this season
-                          </Text>
-                        </Pressable>
-                      ) : (
-                        <Text style={styles.seasonHint}>
-                          This season’s anime
-                        </Text>
-                      )}
-                    </View>
-                    <Pressable
-                      onPress={() => setSeasonOffset((value) => value + 1)}
-                      accessibilityRole="button"
-                      accessibilityLabel="Next anime season"
-                      style={styles.seasonArrow}
-                    >
-                      <Feather
-                        name="chevron-right"
-                        size={22}
-                        color={theme.color.foreground}
-                      />
-                    </Pressable>
-                  </View>
-                ) : null}
-
-                <Text style={styles.filterLabel}>FORMAT</Text>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.filterRow}
-                >
-                  {FORMATS.map((option) => (
-                    <ChoiceChip
-                      key={option.value}
-                      label={option.label}
-                      selected={format === option.value}
-                      onPress={() => setFormat(option.value)}
-                    />
-                  ))}
-                </ScrollView>
-
-                {mode !== "trending" ? (
-                  <View style={styles.sortRow}>
-                    <Text style={styles.filterLabel}>SORT</Text>
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={styles.filterRow}
-                    >
-                      {SORTS.map((option) => (
-                        <ChoiceChip
-                          key={option.value}
-                          label={option.label}
-                          selected={sort === option.value}
-                          onPress={() => setSort(option.value)}
-                          compact
-                        />
-                      ))}
-                    </ScrollView>
-                  </View>
-                ) : null}
-              </>
-            ) : null}
-
-            <View style={styles.resultsHeading}>
-              <Text accessibilityRole="header" style={styles.resultsTitle}>
-                {heading}
-              </Text>
-              {!working && !error && !isLink ? (
-                <Text style={styles.resultCount}>
-                  {count.toLocaleString()} titles
+            <View style={styles.browseToolbar}>
+              {mode === "season" && !trimmed ? (
+                <View style={styles.seasonNavigation}>
+                  <Pressable
+                    onPress={() => setSeasonOffset((value) => value - 1)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Previous anime season"
+                    style={styles.seasonArrow}
+                  >
+                    <Feather name="chevron-left" size={22} color={theme.color.foreground} />
+                  </Pressable>
+                  <Text accessibilityRole="header" style={styles.resultsTitle} numberOfLines={1}>
+                    {heading}
+                  </Text>
+                  <Pressable
+                    onPress={() => setSeasonOffset((value) => value + 1)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Next anime season"
+                    style={styles.seasonArrow}
+                  >
+                    <Feather name="chevron-right" size={22} color={theme.color.foreground} />
+                  </Pressable>
+                </View>
+              ) : (
+                <Text accessibilityRole="header" style={styles.resultsTitle} numberOfLines={1}>
+                  {heading}
                 </Text>
-              ) : null}
+              )}
             </View>
+            {!trimmed && (format !== "all" || (sort !== "POPULARITY_DESC" && mode !== "trending")) ? (
+              <Text style={styles.activeFilters}>
+                {[format !== "all" ? FORMATS.find((item) => item.value === format)?.label : null,
+                  sort !== "POPULARITY_DESC" && mode !== "trending"
+                    ? SORTS.find((item) => item.value === sort)?.label
+                    : null]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </Text>
+            ) : null}
+            {seasonOffset !== 0 && mode === "season" && !trimmed ? (
+              <Pressable
+                onPress={() => setSeasonOffset(0)}
+                accessibilityRole="button"
+                style={styles.currentSeason}
+              >
+                <Text style={styles.currentSeasonText}>Return to this season</Text>
+              </Pressable>
+            ) : null}
             {addError ? (
               <Text style={styles.error} accessibilityLiveRegion="polite">
                 {addError}
@@ -543,7 +532,133 @@ export default function SearchScreen() {
           ) : null
         }
       />
+      <Modal
+        transparent
+        visible={drawerOpen}
+        animationType="none"
+        onRequestClose={closeDrawer}
+      >
+        <View style={styles.drawerOverlay}>
+          <Pressable
+            onPress={closeDrawer}
+            accessibilityRole="button"
+            accessibilityLabel="Close Discover menu"
+            style={styles.drawerScrim}
+          />
+          <Animated.View
+            style={[
+              styles.drawer,
+              {
+                width: drawerWidth,
+                paddingTop: insets.top + 12,
+                paddingBottom: insets.bottom + 12,
+                transform: [{ translateX: drawerX }],
+              },
+            ]}
+          >
+            <View style={styles.drawerHeader}>
+              <Text accessibilityRole="header" style={styles.drawerTitle}>
+                Discover menu
+              </Text>
+              <Pressable
+                onPress={closeDrawer}
+                accessibilityRole="button"
+                accessibilityLabel="Close Discover menu"
+                style={styles.drawerClose}
+              >
+                <Feather name="x" size={22} color={theme.color.foreground} />
+              </Pressable>
+            </View>
+            <ScrollView
+              style={styles.drawerScroll}
+              contentContainerStyle={styles.drawerContent}
+              showsVerticalScrollIndicator={false}
+            >
+              <Text style={styles.drawerSection}>Browse</Text>
+              {BROWSE_MODES.map((option) => (
+                <DrawerRow
+                  key={option.value}
+                  label={option.label}
+                  detail={option.detail}
+                  icon={option.icon}
+                  selected={draftMode === option.value}
+                  onPress={() => setDraftMode(option.value)}
+                />
+              ))}
+              <View style={styles.drawerDivider} />
+              <Text style={styles.drawerSection}>Format</Text>
+              <View style={styles.drawerChips}>
+                {FORMATS.map((option) => (
+                  <ChoiceChip
+                    key={option.value}
+                    label={option.label}
+                    selected={draftFormat === option.value}
+                    onPress={() => setDraftFormat(option.value)}
+                  />
+                ))}
+              </View>
+              {draftMode !== "trending" ? (
+                <>
+                  <View style={styles.drawerDivider} />
+                  <Text style={styles.drawerSection}>Sort by</Text>
+                  {SORTS.map((option) => (
+                    <DrawerRow
+                      key={option.value}
+                      label={option.label}
+                      selected={draftSort === option.value}
+                      onPress={() => setDraftSort(option.value)}
+                    />
+                  ))}
+                </>
+              ) : null}
+            </ScrollView>
+            <View style={styles.drawerFooter}>
+              <Button label="Show anime" onPress={applyDrawer} />
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
     </Screen>
+  );
+}
+
+function DrawerRow({
+  label,
+  detail,
+  icon,
+  selected,
+  onPress,
+}: {
+  label: string;
+  detail?: string;
+  icon?: ComponentProps<typeof Feather>["name"];
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      style={({ pressed }) => [
+        styles.drawerRow,
+        selected && styles.drawerRowSelected,
+        pressed && styles.pressed,
+      ]}
+    >
+      {icon ? (
+        <Feather
+          name={icon}
+          size={20}
+          color={selected ? theme.color.accent : theme.color.muted}
+        />
+      ) : null}
+      <View style={styles.drawerRowText}>
+        <Text style={styles.drawerRowLabel}>{label}</Text>
+        {detail ? <Text style={styles.drawerRowDetail}>{detail}</Text> : null}
+      </View>
+      {selected ? <Feather name="check" size={18} color={theme.color.accent} /> : null}
+    </Pressable>
   );
 }
 
@@ -551,12 +666,10 @@ function ChoiceChip({
   label,
   selected,
   onPress,
-  compact = false,
 }: {
   label: string;
   selected: boolean;
   onPress: () => void;
-  compact?: boolean;
 }) {
   return (
     <Pressable
@@ -565,7 +678,6 @@ function ChoiceChip({
       accessibilityState={{ selected }}
       style={({ pressed }) => [
         styles.chip,
-        compact && styles.chipCompact,
         selected && styles.chipActive,
         pressed && styles.pressed,
       ]}
@@ -579,10 +691,26 @@ function ChoiceChip({
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: SCREEN_PADDING, paddingBottom: 36, gap: 12 },
-  header: { gap: 16, paddingBottom: 4 },
-  modeRow: { flexDirection: "row", gap: 8, paddingTop: 2 },
+  header: { gap: 12, paddingBottom: 4 },
+  menuButton: {
+    width: 48,
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 24,
+    backgroundColor: theme.color.surface,
+  },
+  menuDot: {
+    position: "absolute",
+    top: 9,
+    right: 9,
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: theme.color.accent,
+  },
   chip: {
-    minHeight: 44,
+    minHeight: 48,
     justifyContent: "center",
     paddingHorizontal: 16,
     borderRadius: 999,
@@ -590,7 +718,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.color.border,
   },
-  chipCompact: { minHeight: 40, paddingHorizontal: 14 },
   chipActive: {
     backgroundColor: theme.color.accent,
     borderColor: theme.color.accent,
@@ -598,45 +725,83 @@ const styles = StyleSheet.create({
   chipLabel: { ...theme.type.label, color: theme.color.foreground },
   chipLabelActive: { color: theme.color.accentForeground },
   pressed: { opacity: 0.75 },
-  seasonRow: {
+  browseToolbar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 8,
-    borderRadius: 16,
-    backgroundColor: theme.color.surfaceRaised,
+    gap: 8,
+    marginTop: 2,
   },
+  seasonNavigation: { flexDirection: "row", alignItems: "center", flex: 1, minWidth: 0 },
   seasonArrow: {
     width: 48,
     height: 48,
     alignItems: "center",
     justifyContent: "center",
   },
-  seasonCenter: { alignItems: "center", gap: 2 },
-  seasonLabel: { ...theme.type.section, color: theme.color.foreground },
-  seasonHint: { ...theme.type.caption, color: theme.color.muted },
-  seasonReset: { ...theme.type.caption, color: theme.color.accent },
-  filterLabel: {
-    ...theme.type.caption,
-    color: theme.color.muted,
-    fontWeight: "700",
-    letterSpacing: 1,
-  },
-  filterRow: { gap: 8, paddingRight: SCREEN_PADDING },
-  sortRow: { gap: 8 },
-  resultsHeading: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    justifyContent: "space-between",
-    gap: 8,
-    marginTop: 8,
-  },
+  currentSeason: { minHeight: 48, alignSelf: "flex-start", justifyContent: "center" },
+  currentSeasonText: { ...theme.type.label, color: theme.color.accent },
+  activeFilters: { ...theme.type.caption, color: theme.color.accent, paddingLeft: 48 },
   resultsTitle: {
     ...theme.type.section,
     color: theme.color.foreground,
     flexShrink: 1,
   },
-  resultCount: { ...theme.type.caption, color: theme.color.muted },
+  drawerOverlay: { flex: 1 },
+  drawerScrim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.62)",
+  },
+  drawer: {
+    height: "100%",
+    backgroundColor: theme.color.surfaceRaised,
+    elevation: 16,
+  },
+  drawerHeader: {
+    minHeight: 56,
+    paddingLeft: 20,
+    paddingRight: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  drawerTitle: { ...theme.type.title, color: theme.color.foreground },
+  drawerClose: {
+    width: 48,
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  drawerScroll: { flex: 1 },
+  drawerContent: { paddingHorizontal: 16, paddingBottom: 20, gap: 6 },
+  drawerSection: {
+    ...theme.type.label,
+    color: theme.color.muted,
+    marginTop: 12,
+    marginBottom: 4,
+    paddingHorizontal: 12,
+  },
+  drawerRow: {
+    minHeight: 52,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  drawerRowSelected: { backgroundColor: theme.color.accentContainer },
+  drawerRowText: { flex: 1, minWidth: 0 },
+  drawerRowLabel: { ...theme.type.label, color: theme.color.foreground },
+  drawerRowDetail: { ...theme.type.caption, color: theme.color.muted },
+  drawerDivider: {
+    height: 1,
+    backgroundColor: theme.color.border,
+    marginHorizontal: 12,
+    marginTop: 12,
+  },
+  drawerChips: { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingHorizontal: 8 },
+  drawerFooter: { paddingHorizontal: 20, paddingTop: 12 },
   error: { ...theme.type.body, color: theme.color.danger },
   more: { marginTop: 8 },
 });
