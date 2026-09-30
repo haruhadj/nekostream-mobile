@@ -35,7 +35,7 @@ const MEDIA_FIELDS = `
 
 export async function searchMedia(
   search: string,
-  { page = 1, perPage = 24 } = {}
+  { page = 1, perPage = 24 } = {},
 ) {
   const data = await anilistRequest<{
     Page: {
@@ -49,7 +49,7 @@ export async function searchMedia(
          media(search: $search, type: ANIME, sort: SEARCH_MATCH) { ${MEDIA_FIELDS} }
        }
      }`,
-    { search, page, perPage }
+    { search, page, perPage },
   );
 
   return data.Page;
@@ -69,7 +69,7 @@ export async function trendingMedia({ page = 1, perPage = 24 } = {}) {
          media(type: ANIME, sort: TRENDING_DESC) { ${MEDIA_FIELDS} }
        }
      }`,
-    { page, perPage }
+    { page, perPage },
   );
 
   return data.Page;
@@ -78,7 +78,7 @@ export async function trendingMedia({ page = 1, perPage = 24 } = {}) {
 export async function mediaById(id: number) {
   const data = await anilistRequest<{ Media: AniListMedia | null }>(
     `query ($id: Int) { Media(id: $id, type: ANIME) { ${MEDIA_FIELDS} } }`,
-    { id }
+    { id },
   );
 
   return data.Media;
@@ -109,7 +109,7 @@ export async function viewerLibrary(accessToken: string) {
   const viewer = await anilistRequest<{ Viewer: { id: number } | null }>(
     `query { Viewer { id } }`,
     {},
-    { accessToken }
+    { accessToken },
   );
 
   if (!viewer.Viewer) return [];
@@ -139,7 +139,7 @@ export async function viewerLibrary(accessToken: string) {
        }
      }`,
     { userId: viewer.Viewer.id },
-    { accessToken }
+    { accessToken },
   );
 
   // AniList returns one list per status, and custom lists can repeat an entry.
@@ -164,26 +164,20 @@ export type AiringSchedule = {
 /** AniList caps Page(media: id_in:) at 50 ids per request. */
 const AIRING_CHUNK = 50;
 
-/** A whole library is many chunks; stay well clear of AniList's rate limit. */
-const AIRING_CHUNK_GAP_MS = 700;
-
 /**
  * Broadcast times for a set of anime. Public data, so no access token is
  * needed — which is what lets the background poller run without a session.
  * Ids AniList does not return are simply absent from the result.
  */
 export async function airingSchedules(
-  mediaIds: number[]
+  mediaIds: number[],
 ): Promise<AiringSchedule[]> {
   const schedules: AiringSchedule[] = [];
 
   for (let i = 0; i < mediaIds.length; i += AIRING_CHUNK) {
     const ids = mediaIds.slice(i, i + AIRING_CHUNK);
 
-    if (i > 0) {
-      await new Promise((resolve) => setTimeout(resolve, AIRING_CHUNK_GAP_MS));
-    }
-
+    // anilistRequest serializes every call and enforces the shared rate limit.
     const data = await anilistRequest<{
       Page: {
         media: Array<{
@@ -200,7 +194,7 @@ export async function airingSchedules(
            }
          }
        }`,
-      { ids }
+      { ids },
     );
 
     for (const media of data.Page.media) {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ScrollView, StyleSheet, Text } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { parseAnimeLink } from "@/data/anime-link";
 import { resolveAnimeLink, type LinkedAnime } from "@/data/linked-anime";
 import { addEntry, entryByMediaId } from "@/db/library";
@@ -87,29 +87,59 @@ export default function AddAnimeScreen() {
     <Screen>
       <ScrollView contentContainerStyle={styles.content}>
         <ScreenTitle
-          title="Quick add"
-          subtitle="Add an anime to your device library."
+          title="Anime preview"
+          subtitle="See the details, then add it to your library."
         />
         {loading ? <Text style={styles.body}>Loading anime…</Text> : null}
         {anime ? (
           <>
-            <Image
-              source={
-                anime.coverImage?.large ? { uri: anime.coverImage.large } : null
-              }
-              style={styles.poster}
-              contentFit="cover"
-            />
-            <Text style={styles.title}>
-              {anime.title.english ?? anime.title.romaji}
-            </Text>
-            {anime.title.english ? (
-              <Text style={styles.body}>{anime.title.romaji}</Text>
+            <View style={styles.hero}>
+              <Image
+                source={
+                  anime.coverImage?.large
+                    ? { uri: anime.coverImage.large }
+                    : null
+                }
+                style={styles.poster}
+                contentFit="cover"
+                cachePolicy="disk"
+              />
+              <View style={styles.heroText}>
+                <Text style={styles.title}>
+                  {anime.title.english ?? anime.title.romaji}
+                </Text>
+                {anime.title.english &&
+                anime.title.english !== anime.title.romaji ? (
+                  <Text style={styles.body}>{anime.title.romaji}</Text>
+                ) : null}
+                <Text style={styles.body}>
+                  {[
+                    anime.format?.replace(/_/g, " "),
+                    anime.seasonYear,
+                    anime.episodes ? `${anime.episodes} episodes` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </Text>
+                {anime.averageScore ? (
+                  <Text style={styles.score}>
+                    {anime.averageScore}% AniList score
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+            {anime.genres?.length ? (
+              <Text style={styles.genres}>{anime.genres.join(" · ")}</Text>
+            ) : null}
+            {anime.description ? (
+              <Text style={styles.description}>
+                {plainDescription(anime.description)}
+              </Text>
             ) : null}
             <Text style={styles.body}>
               {existingId
                 ? "Already in your library."
-                : "Ready to add to your library."}
+                : "Add this anime to track it on your device."}
             </Text>
             <Button
               label={existingId ? "Open anime" : "Add to library"}
@@ -140,22 +170,36 @@ export default function AddAnimeScreen() {
         <Button
           label="Back to app"
           variant="ghost"
-          onPress={() => router.replace("/")}
+          onPress={() =>
+            router.canGoBack() ? router.back() : router.replace("/")
+          }
         />
       </ScrollView>
     </Screen>
   );
 }
 
+function plainDescription(text: string): string {
+  return text
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .trim();
+}
+
 const styles = StyleSheet.create({
   content: { padding: SCREEN_PADDING, gap: 16, paddingBottom: 32 },
+  hero: { flexDirection: "row", gap: 16 },
+  heroText: { flex: 1, gap: 8 },
   poster: {
-    width: 140,
-    height: 210,
+    width: 116,
+    height: 174,
     borderRadius: 12,
     backgroundColor: theme.color.surface,
   },
   title: { ...theme.type.title, color: theme.color.foreground },
   body: { ...theme.type.body, color: theme.color.muted },
+  score: { ...theme.type.label, color: theme.color.amberText },
+  genres: { ...theme.type.caption, color: theme.color.accent },
+  description: { ...theme.type.body, color: theme.color.foreground },
   error: { ...theme.type.body, color: theme.color.danger },
 });

@@ -8,6 +8,12 @@ export type LinkedAnime = {
   title: { romaji: string; english: string | null };
   coverImage: { large: string | null } | null;
   episodes: number | null;
+  format: string | null;
+  status: string | null;
+  seasonYear: number | null;
+  averageScore: number | null;
+  genres: string[] | null;
+  description: string | null;
 };
 
 export async function resolveAnimeLink(link: AnimeLink): Promise<LinkedAnime> {
@@ -15,7 +21,9 @@ export async function resolveAnimeLink(link: AnimeLink): Promise<LinkedAnime> {
   const { Media } = await anilistRequest<{ Media: LinkedAnime | null }>(
     `query ($id: Int!) {
       Media(${field}: $id, type: ANIME) {
-        id idMal type title { romaji english } coverImage { large } episodes
+        id idMal type title { romaji english } coverImage { large }
+        episodes format status seasonYear averageScore genres
+        description(asHtml: false)
       }
     }`,
     { id: link.id },

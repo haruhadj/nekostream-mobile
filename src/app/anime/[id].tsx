@@ -19,7 +19,6 @@ import type { SavedFilter } from "@shared/nyaa/filter";
 import { AiringBadge } from "@/components/airing-badge";
 import { EpisodeList } from "@/components/episode-list";
 import { NyaaFilterPanel } from "@/components/nyaa-filter-panel";
-import { NyaaSearch } from "@/components/nyaa-search";
 import { ProgressControl } from "@/components/progress-control";
 import { TrackerEditors } from "@/components/tracker-editor";
 import { TrackerLinks } from "@/components/tracker-links";
@@ -254,6 +253,11 @@ export default function AnimeDetailScreen() {
           </View>
         </View>
 
+        <TrackerLinks
+          anilistMediaId={entry.anilistMediaId}
+          malMediaId={entry.malMediaId}
+        />
+
         <View style={styles.controls}>
           <Text style={styles.progressHeading}>Your progress</Text>
           {entry.totalEpisodes ? (
@@ -273,6 +277,13 @@ export default function AnimeDetailScreen() {
             totalEpisodes={entry.totalEpisodes}
             onChange={onChange}
           />
+          <View style={styles.trackerDivider} />
+          <Text style={styles.trackerCaption}>Edit status, score and sync</Text>
+          <TrackerEditors
+            entry={entry}
+            malLinked={mal !== null}
+            onSaved={() => void reload()}
+          />
         </View>
 
         <View style={styles.tabs} accessibilityRole="tablist">
@@ -290,22 +301,36 @@ export default function AnimeDetailScreen() {
                   section === tab && styles.tabLabelActive,
                 ]}
               >
-                {tab === "episodes" ? "Episodes" : "About & trackers"}
+                {tab === "episodes" ? "Episodes" : "About"}
               </Text>
             </Pressable>
           ))}
         </View>
 
-        <View style={section === "episodes" ? undefined : { display: "none" }}>
-          <NyaaSearch
-            key={entry.id}
-            english={entry.titleEnglish}
-            romaji={entry.titleRomaji}
-          />
-        </View>
-
         {section === "episodes" ? (
           <>
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: "/nyaa-search",
+                  params: { id: entry.id },
+                })
+              }
+              accessibilityRole="button"
+              accessibilityLabel="Search Nyaa releases for this anime"
+              style={({ pressed }) => [
+                styles.nyaaShortcut,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Feather name="search" size={18} color={theme.color.accent} />
+              <Text style={styles.nyaaShortcutText}>Search Nyaa</Text>
+              <Feather
+                name="arrow-up-right"
+                size={18}
+                color={theme.color.muted}
+              />
+            </Pressable>
             <EpisodeList
               episodes={episodes}
               progress={entry.progress}
@@ -336,19 +361,6 @@ export default function AnimeDetailScreen() {
                 A synopsis will appear when anime details are available.
               </Text>
             )}
-            <Text style={styles.progressHeading}>Manage your trackers</Text>
-            <Text style={styles.subtitle}>
-              Update status, score, and sync preferences.
-            </Text>
-            <TrackerEditors
-              entry={entry}
-              malLinked={mal !== null}
-              onSaved={() => void reload()}
-            />
-            <TrackerLinks
-              anilistMediaId={entry.anilistMediaId}
-              malMediaId={entry.malMediaId}
-            />
           </>
         )}
       </ScrollView>
@@ -394,6 +406,22 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     backgroundColor: theme.color.surface,
+  },
+  trackerDivider: { height: 1, backgroundColor: theme.color.border },
+  trackerCaption: { ...theme.type.caption, color: theme.color.muted },
+  nyaaShortcut: {
+    minHeight: 48,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: theme.color.surface,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  nyaaShortcutText: {
+    ...theme.type.label,
+    color: theme.color.foreground,
+    flex: 1,
   },
   content: {
     paddingHorizontal: SCREEN_PADDING,

@@ -67,14 +67,17 @@ function RootNavigator() {
         contentStyle: { backgroundColor: theme.color.background },
       }}
     >
-      <Stack.Screen name="add-anime" />
       <Stack.Protected guard={status === "ready"}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="nyaa-search" />
       </Stack.Protected>
 
       <Stack.Protected guard={status === "no-tracker"}>
         <Stack.Screen name="login" />
       </Stack.Protected>
+
+      {/* Keep deep-link Quick Add available, but out of the default fallback. */}
+      <Stack.Screen name="add-anime" />
     </Stack>
   );
 }

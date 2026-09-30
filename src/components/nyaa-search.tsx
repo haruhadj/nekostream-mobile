@@ -108,7 +108,6 @@ export function NyaaSearch({
 
   return (
     <View style={styles.section}>
-      <Text style={styles.heading}>Search Nyaa</Text>
       <Text style={styles.caption}>
         Find releases using this anime’s titles, or enter your own search.
       </Text>
@@ -218,7 +217,6 @@ export function NyaaSearch({
 
 const styles = StyleSheet.create({
   section: { gap: 12 },
-  heading: { color: theme.color.foreground, ...theme.type.section },
   caption: { color: theme.color.muted, fontSize: 12, lineHeight: 18 },
   actions: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   release: {
