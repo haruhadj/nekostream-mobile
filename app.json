@@ -4,7 +4,7 @@
     "slug": "nekostream",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/nekostream-logo.png",
     "scheme": "nekostream",
     "userInterfaceStyle": "dark",
     "ios": {
@@ -14,10 +14,9 @@
     "android": {
       "package": "org.nekostream.mobile",
       "adaptiveIcon": {
-        "backgroundColor": "#09090b",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#131217",
+        "foregroundImage": "./assets/images/nekostream-android-foreground.png",
+        "monochromeImage": "./assets/images/nekostream-android-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
     },
@@ -30,8 +29,8 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#09090b",
-          "image": "./assets/images/splash-icon.png",
+          "backgroundColor": "#131217",
+          "image": "./assets/images/nekostream-mark.png",
           "imageWidth": 76
         }
       ],

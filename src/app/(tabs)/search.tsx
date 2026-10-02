@@ -82,7 +82,7 @@ export default function SearchScreen() {
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const drawerWidth = Math.min(340, windowWidth - 40);
-  const drawerX = useRef(new Animated.Value(-360)).current;
+  const [drawerX] = useState(() => new Animated.Value(-360));
   const now = useNow();
   const [baseSeason] = useState(() => {
     const date = new Date();
@@ -749,7 +749,7 @@ const styles = StyleSheet.create({
   },
   drawerOverlay: { flex: 1 },
   drawerScrim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0, 0, 0, 0.62)",
   },
   drawer: {

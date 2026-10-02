@@ -63,7 +63,8 @@ internal class TorrentEngine(private val context: Context) {
       waitForHandle(session, torrent).also { handle = it }
     }
     val priorities = Array(files.numFiles()) { Priority.IGNORE }
-    priorities[fileIndex] = Priority.TOP_PRIORITY
+    // Keep the whole episode at normal priority; the stream server boosts its current piece window.
+    priorities[fileIndex] = Priority.DEFAULT
     torrentHandle.prioritizeFiles(priorities)
     selectedFileIndex = fileIndex
 

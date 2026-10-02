@@ -22,6 +22,7 @@ export default function appConfig({ config }: ConfigContext): ExpoConfig {
         "expo-build-properties",
         {
           android: {
+            buildArchs: ["arm64-v8a"],
             enableMinifyInReleaseBuilds: true,
             enableShrinkResourcesInReleaseBuilds: true,
             networkInspector: !standalone,
