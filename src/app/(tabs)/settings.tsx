@@ -1,11 +1,22 @@
 import Feather from "@expo/vector-icons/Feather";
-import { useState } from "react";
-import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View,
+} from "react-native";
 
 import { MAL_CONFIG_ERROR } from "@/auth/config";
 import { useAuth } from "@/auth/context";
+import {
+  FEED_INTERVALS,
+  getFeedInterval,
+  getReleaseNotificationsEnabled,
+  setFeedInterval,
+  setReleaseNotificationsEnabled,
+  type FeedInterval,
+} from "@/sync/feed-background";
 import { theme } from "@/theme";
 import { Button } from "@/ui/button";
+import { OptionSheet } from "@/ui/option-sheet";
 import { Screen, ScreenTitle, SCREEN_PADDING } from "@/ui/screen";
 
 /**
@@ -17,14 +28,58 @@ import { Screen, ScreenTitle, SCREEN_PADDING } from "@/ui/screen";
  * is the same one the web app has, and it is deliberate: one tracker failing
  * never takes the other with it.
  *
- * The notification toggle and the Stremio addon are not coming here. Email
- * needs SMTP and Stremio needs an addon URL — both are the server's, and this
- * client no longer has one.
+ * Stremio still needs an addon URL from the server. Feed notifications use
+ * this device's saved filters and local notifications instead.
  */
 export default function SettingsScreen() {
   const { anilist, mal, linkMal, unlinkMal, signOut } = useAuth();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [feedInterval, setIntervalValue] = useState<FeedInterval>("180");
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [intervalSheetOpen, setIntervalSheetOpen] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void Promise.all([getFeedInterval(), getReleaseNotificationsEnabled()]).then(([interval, notifications]) => {
+      if (!active) return;
+      setIntervalValue(interval);
+      setNotificationsEnabled(notifications);
+    }).catch((cause) => {
+      if (active) setError(cause instanceof Error ? cause.message : "Could not load feed settings.");
+    });
+    return () => { active = false; };
+  }, []);
+
+  async function chooseInterval(next: FeedInterval) {
+    try {
+      await setFeedInterval(next);
+      setIntervalValue(next);
+    } catch (cause) {
+      Alert.alert(
+        "Could not save interval",
+        cause instanceof Error ? cause.message : "Try again.",
+      );
+    }
+  }
+
+  async function toggleNotifications(enabled: boolean) {
+    try {
+      const granted = await setReleaseNotificationsEnabled(enabled);
+      setNotificationsEnabled(granted);
+      if (enabled && !granted) {
+        Alert.alert(
+          "Notifications unavailable",
+          "Allow NekoStream notifications in your phone settings to receive new release alerts.",
+        );
+      }
+    } catch (cause) {
+      Alert.alert(
+        "Could not change notifications",
+        cause instanceof Error ? cause.message : "Try again.",
+      );
+    }
+  }
 
   async function connectMal() {
     if (busy) return;
@@ -132,6 +187,50 @@ export default function SettingsScreen() {
           <Text style={styles.hint}>{MAL_CONFIG_ERROR}</Text>
         ) : null}
 
+        <Text style={styles.sectionLabel}>Episode feeds</Text>
+        <View style={styles.card}>
+          <Pressable
+            style={styles.settingRow}
+            onPress={() => setIntervalSheetOpen(true)}
+            accessibilityRole="button"
+          >
+            <View style={styles.settingText}>
+              <Text style={styles.fieldValue}>Refresh interval</Text>
+              <Text style={styles.fieldDetail}>
+                {FEED_INTERVALS.find((option) => option.key === feedInterval)?.label}
+              </Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={theme.color.muted} />
+          </Pressable>
+          <View style={styles.divider} />
+          <View style={styles.settingRow}>
+            <View style={styles.settingText}>
+              <Text style={styles.fieldValue}>New release notifications</Text>
+              <Text style={styles.fieldDetail}>
+                Alert this phone when a saved feed finds new releases.
+              </Text>
+            </View>
+            <Switch
+              value={notificationsEnabled}
+              onValueChange={(value) => void toggleNotifications(value)}
+              disabled={feedInterval === "0" && !notificationsEnabled}
+              trackColor={{ true: theme.color.accent }}
+            />
+          </View>
+        </View>
+        <Text style={styles.hint}>
+          Only saved feeds refresh. Nyaa requests are spaced out, and phone
+          background timing may run later than the selected interval.
+        </Text>
+        <OptionSheet
+          visible={intervalSheetOpen}
+          title="Refresh episode feeds"
+          options={FEED_INTERVALS}
+          selected={feedInterval}
+          onSelect={(value) => void chooseInterval(value)}
+          onClose={() => setIntervalSheetOpen(false)}
+        />
+
         <Text style={styles.sectionLabel}>On this device</Text>
         <View style={styles.localInfo}>
           <Feather name="smartphone" color={theme.color.accent} size={22} />
@@ -222,6 +321,15 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   fieldDetail: { color: theme.color.muted, fontSize: 12, lineHeight: 17 },
+  settingRow: {
+    minHeight: 72,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  settingText: { flex: 1, gap: 5 },
   cardActions: {
     paddingHorizontal: 16,
     paddingBottom: 14,

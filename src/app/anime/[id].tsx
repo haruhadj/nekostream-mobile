@@ -36,6 +36,7 @@ import { useAuth } from "@/auth/context";
 import { useNow } from "@/hooks/use-now";
 import { tickProgress, type SyncOutcome } from "@/sync/progress";
 import { refreshEpisodes } from "@/sync/refresh";
+import { syncFeedBackgroundTask } from "@/sync/feed-background";
 import { theme } from "@/theme";
 import { Screen, ScreenLoading, SCREEN_PADDING } from "@/ui/screen";
 
@@ -123,6 +124,7 @@ export default function AnimeDetailScreen() {
   const onSaveFilter = useCallback(
     async (values: SavedFilter): Promise<string | null> => {
       await saveFilter(id, values);
+      await syncFeedBackgroundTask();
 
       // Populate the list straight away: a feed saved with nothing behind it
       // looks broken. A failure here is worth saying out loud — the feed did
@@ -145,6 +147,7 @@ export default function AnimeDetailScreen() {
 
   const onRemoveFilter = useCallback(async () => {
     await deleteFilter(id);
+    await syncFeedBackgroundTask();
     await reloadNyaa();
   }, [id, reloadNyaa]);
 

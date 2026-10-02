@@ -16,9 +16,22 @@ import { desc, eq } from "drizzle-orm";
 import type { SavedFilter } from "@shared/nyaa/filter";
 
 import { db } from "./client";
-import { episode, rssFilter, type EpisodeRow, type RssFilterRow } from "./schema";
+import { episode, libraryEntry, rssFilter, type EpisodeRow, type RssFilterRow } from "./schema";
 
 export type { EpisodeRow, RssFilterRow };
+
+export async function listSavedFeeds() {
+  return db
+    .select({
+      libraryEntryId: rssFilter.libraryEntryId,
+      lastFetchedAt: rssFilter.lastFetchedAt,
+      title: libraryEntry.titleEnglish,
+      titleRomaji: libraryEntry.titleRomaji,
+    })
+    .from(rssFilter)
+    .innerJoin(libraryEntry, eq(rssFilter.libraryEntryId, libraryEntry.id))
+    .orderBy(rssFilter.lastFetchedAt);
+}
 
 export async function getFilter(
   libraryEntryId: string

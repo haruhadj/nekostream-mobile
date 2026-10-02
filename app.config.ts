@@ -15,6 +15,8 @@ export default function appConfig({ config }: ConfigContext): ExpoConfig {
     slug: "nekostream",
     plugins: [
       ...(config.plugins ?? []),
+      "expo-background-task",
+      "expo-notifications",
       [
         "expo-build-properties",
         {

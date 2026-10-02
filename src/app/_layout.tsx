@@ -2,13 +2,16 @@
 // client calls and React Native does not ship. See src/polyfills.ts.
 import "@/polyfills";
 
-import { Stack } from "expo-router";
+import * as Notifications from "expo-notifications";
+import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { ActivityIndicator, View } from "react-native";
+import { useEffect } from "react";
+import { ActivityIndicator, AppState, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AuthProvider, useAuth } from "@/auth/context";
 import { MigrationsGate } from "@/db/migrations-gate";
+import { refreshDueFeeds, syncFeedBackgroundTask } from "@/sync/feed-background";
 import { theme } from "@/theme";
 
 /**
@@ -34,16 +37,56 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <StatusBar style="light" />
       <MigrationsGate>
-        <AuthProvider>
-          <RootNavigator />
-        </AuthProvider>
+        <FeedRefreshLifecycle>
+          <AuthProvider>
+            <RootNavigator />
+          </AuthProvider>
+        </FeedRefreshLifecycle>
       </MigrationsGate>
     </SafeAreaProvider>
   );
 }
 
+function FeedRefreshLifecycle({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    const checkFeeds = () => {
+      void syncFeedBackgroundTask().catch((error) => console.warn("Could not schedule feed refresh", error));
+      void refreshDueFeeds().catch((error) => console.warn("Could not refresh feeds", error));
+    };
+    checkFeeds();
+    const timer = setInterval(() => {
+      if (AppState.currentState === "active") void refreshDueFeeds().catch((error) => console.warn("Could not refresh feeds", error));
+    }, 60_000);
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") checkFeeds();
+    });
+    return () => {
+      clearInterval(timer);
+      subscription.remove();
+    };
+  }, []);
+
+  return <>{children}</>;
+}
+
 function RootNavigator() {
   const { status } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status !== "ready") return;
+    const openRelease = (notification: Notifications.Notification) => {
+      const url = notification.request.content.data?.url;
+      if (typeof url === "string" && /^\/anime\/[^/]+$/.test(url)) {
+        router.push(url as "/anime/[id]");
+        void Notifications.clearLastNotificationResponseAsync();
+      }
+    };
+    const response = Notifications.getLastNotificationResponse();
+    if (response) openRelease(response.notification);
+    const subscription = Notifications.addNotificationResponseReceivedListener((next) => openRelease(next.notification));
+    return () => subscription.remove();
+  }, [router, status]);
 
   if (status === "loading") {
     return (
