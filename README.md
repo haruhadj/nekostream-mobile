@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/images/nekostream-logo.png" alt="NekoStream logo" width="160" />
+</p>
+
 # NekoStream Mobile
 
 Standalone React Native client for AniList, MyAnimeList, and Nyaa. The app
