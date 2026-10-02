@@ -113,6 +113,7 @@ function RootNavigator() {
       <Stack.Protected guard={status === "ready"}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="nyaa-search" />
+        <Stack.Screen name="player" />
       </Stack.Protected>
 
       <Stack.Protected guard={status === "no-tracker"}>

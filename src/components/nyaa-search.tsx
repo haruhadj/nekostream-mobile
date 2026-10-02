@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, Keyboard, Linking, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
+import { Alert, Keyboard, Linking, Platform, StyleSheet, Text, View } from "react-native";
 
 import { formatBytes, formatRelative } from "@shared/format";
 import { fetchReleases, type NyaaRelease } from "@shared/nyaa/rss";
 import { theme } from "@/theme";
+import { encodeTorrentMagnet } from "@/lib/torrent-route";
 import { Button } from "@/ui/button";
 import { Input } from "@/ui/input";
 
@@ -14,6 +16,7 @@ export function NyaaSearch({
   english: string | null;
   romaji: string;
 }) {
+  const router = useRouter();
   const [query, setQuery] = useState(english?.trim() || romaji.trim());
   const [releases, setReleases] = useState<NyaaRelease[]>([]);
   const [busy, setBusy] = useState(false);
@@ -188,6 +191,16 @@ export function NyaaSearch({
               .join(" · ")}
           </Text>
           <View style={styles.actions}>
+            {Platform.OS === "android" ? (
+              <Button
+                label="Play"
+                size="sm"
+                onPress={() => router.push({
+                  pathname: "/player",
+                  params: { magnet: encodeTorrentMagnet(release.magnetUri), title: release.rawTitle },
+                })}
+              />
+            ) : null}
             <Button
               label="View release"
               variant="outline"
@@ -198,6 +211,7 @@ export function NyaaSearch({
             />
             <Button
               label="Open magnet"
+              variant="outline"
               size="sm"
               onPress={() => void open(release.magnetUri, true)}
             />

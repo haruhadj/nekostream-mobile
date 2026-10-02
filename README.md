@@ -20,7 +20,17 @@ Use `npm run dev` with the installed **NekoStream Dev** app for Fast Refresh.
 The development app is separate from the release app and keeps its own data.
 
 Expo Go cannot run this app: it requires a custom native binary for the
-`nekostream://` OAuth callbacks and native SQLite/SecureStore modules.
+`nekostream://` OAuth callbacks, native SQLite/SecureStore modules, and the
+Android torrent player.
+
+## Torrent playback
+
+On Android 9 or newer, Nyaa releases offer **Play** beside **Open magnet**.
+Play fetches torrent metadata, selects a video file, and streams verified
+pieces through a loopback HTTP server to the in-app video player. The active
+stream shows a foreground notification when notification permission is granted.
+Leaving the player stops the torrent session and removes its temporary cache.
+Playback depends on available peers and codecs supported by the device.
 
 ## Project layout
 

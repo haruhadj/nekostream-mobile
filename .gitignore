@@ -41,6 +41,8 @@ example
 # generated native folders
 /ios
 /android
+/modules/*/android/build/
+/modules/*/android/.gradle/
 
 # Local release signing key. Not a shared secret worth committing — regenerate
 # with scripts/local-release.sh if it is ever lost (costs one uninstall).

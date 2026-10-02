@@ -17,6 +17,7 @@ export default function appConfig({ config }: ConfigContext): ExpoConfig {
       ...(config.plugins ?? []),
       "expo-background-task",
       "expo-notifications",
+      "expo-video",
       [
         "expo-build-properties",
         {
@@ -24,6 +25,8 @@ export default function appConfig({ config }: ConfigContext): ExpoConfig {
             enableMinifyInReleaseBuilds: true,
             enableShrinkResourcesInReleaseBuilds: true,
             networkInspector: !standalone,
+            // The in-app torrent stream is served from 127.0.0.1.
+            usesCleartextTraffic: true,
           },
         },
       ],

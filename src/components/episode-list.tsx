@@ -12,12 +12,14 @@
  */
 
 import { useState } from "react";
-import { Alert, Linking, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
+import { Alert, Linking, Platform, StyleSheet, Text, View } from "react-native";
 
 import { formatBytes, formatRelative } from "@shared/format";
 
 import type { EpisodeRow } from "@/db/nyaa";
 import { theme } from "@/theme";
+import { encodeTorrentMagnet } from "@/lib/torrent-route";
 import { Button } from "@/ui/button";
 
 export function EpisodeList({
@@ -39,6 +41,7 @@ export function EpisodeList({
   onRefresh: () => Promise<string>;
   onMarkWatched: (progress: number) => Promise<void>;
 }) {
+  const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -159,6 +162,16 @@ export function EpisodeList({
                 </View>
 
                 <View style={styles.rowActions}>
+                  {Platform.OS === "android" ? (
+                    <Button
+                      label="Play"
+                      size="sm"
+                      onPress={() => router.push({
+                        pathname: "/player",
+                        params: { magnet: encodeTorrentMagnet(ep.magnetUri), title: ep.rawTitle },
+                      })}
+                    />
+                  ) : null}
                   {episodeNumber !== null ? (
                     <Button
                       label={watched ? "Watched" : "Mark watched"}
@@ -175,6 +188,7 @@ export function EpisodeList({
 
                   <Button
                     label="Open magnet"
+                    variant="outline"
                     size="sm"
                     onPress={() => void openMagnet(ep.magnetUri)}
                   />
@@ -242,5 +256,5 @@ const styles = StyleSheet.create({
   rowText: { flex: 1, gap: 4 },
   title: { color: theme.color.foreground, fontSize: 13, lineHeight: 18 },
   meta: { color: theme.color.muted, fontSize: 11, lineHeight: 16 },
-  rowActions: { flexDirection: "row", justifyContent: "flex-end", gap: 8 },
+  rowActions: { flexDirection: "row", justifyContent: "flex-end", flexWrap: "wrap", gap: 8 },
 });

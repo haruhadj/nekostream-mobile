@@ -1,0 +1,42 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'org.nekostream.torrent'
+version = '0.1.0'
+
+android {
+  namespace "org.nekostream.torrent"
+  defaultConfig {
+    versionCode 1
+    versionName "0.1.0"
+  }
+  lintOptions {
+    abortOnError false
+  }
+  sourceSets.main.jniLibs.srcDir(layout.buildDirectory.dir('generated/torrentJniLibs'))
+}
+
+configurations {
+  torrentNative
+}
+
+dependencies {
+  implementation 'org.libtorrent4j:libtorrent4j:2.1.0-39'
+  ['arm', 'arm64', 'x86', 'x86_64'].each { architecture ->
+    torrentNative "org.libtorrent4j:libtorrent4j-android-${architecture}:2.1.0-39"
+  }
+}
+
+tasks.register('extractTorrentNative', Copy) {
+  from { configurations.torrentNative.collect { zipTree(it) } }
+  include 'lib/**'
+  eachFile { file -> file.path = file.path.replaceFirst('^lib/', '') }
+  includeEmptyDirs = false
+  into layout.buildDirectory.dir('generated/torrentJniLibs')
+}
+
+tasks.named('preBuild').configure {
+  dependsOn tasks.named('extractTorrentNative')
+}
