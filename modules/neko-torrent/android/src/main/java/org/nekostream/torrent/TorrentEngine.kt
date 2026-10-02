@@ -1,6 +1,7 @@
 package org.nekostream.torrent
 
 import android.content.Context
+import android.util.Log
 import org.libtorrent4j.Priority
 import org.libtorrent4j.SessionManager
 import org.libtorrent4j.TorrentHandle
@@ -20,10 +21,12 @@ internal class TorrentEngine(private val context: Context) {
     require(magnetUri.startsWith("magnet:?xt=urn:btih:")) { "This release has no usable magnet link." }
     check(directory.mkdirs()) { "Could not create the stream cache." }
 
+    Log.i(TAG, "Starting libtorrent session")
     val session = SessionManager()
     session.start()
     manager = session
 
+    Log.i(TAG, "Session started; requesting torrent metadata")
     val metadata = session.fetchMagnet(magnetUri, 60, directory)
       ?: throw IllegalStateException("Could not find torrent metadata. Check seeders and try again.")
     val torrent = TorrentInfo(metadata)
@@ -41,6 +44,7 @@ internal class TorrentEngine(private val context: Context) {
         )
       }
     check(videos.isNotEmpty()) { "This torrent contains no supported video file." }
+    Log.i(TAG, "Torrent metadata loaded; found ${videos.size} video file(s)")
     return mapOf("name" to torrent.name(), "files" to videos)
   }
 
@@ -120,4 +124,8 @@ internal class TorrentEngine(private val context: Context) {
   private fun isVideo(name: String): Boolean =
     listOf(".mp4", ".m4v", ".mkv", ".webm", ".mov", ".ts")
       .any { extension -> name.endsWith(extension, ignoreCase = true) }
+
+  private companion object {
+    const val TAG = "NekoTorrent"
+  }
 }

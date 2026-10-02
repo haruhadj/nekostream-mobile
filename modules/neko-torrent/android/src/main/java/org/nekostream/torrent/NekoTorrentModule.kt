@@ -1,6 +1,7 @@
 package org.nekostream.torrent
 
 import android.os.Build
+import android.util.Log
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
@@ -16,18 +17,31 @@ class NekoTorrentModule : Module() {
       engine?.stop()
       engine = TorrentEngine(context)
       try {
+        TorrentPlaybackService.start(context)
         engine!!.prepare(magnetUri)
       } catch (error: Throwable) {
-        engine?.stop()
+        Log.e(TAG, "prepareAsync failed", error)
+        runCatching { engine?.stop() }
+          .onFailure { cleanupError -> Log.w(TAG, "Torrent cleanup failed after prepareAsync error", cleanupError) }
         engine = null
+        runCatching { TorrentPlaybackService.stop(context) }
+          .onFailure { cleanupError -> Log.w(TAG, "Could not stop torrent notification after prepareAsync error", cleanupError) }
         throw error
       }
     }
 
     AsyncFunction("playAsync") { fileIndex: Int ->
-      val streamUrl = requireNotNull(engine) { "Open a torrent before choosing a video." }.play(fileIndex)
-      TorrentPlaybackService.start(requireNotNull(appContext.reactContext))
-      streamUrl
+      try {
+        val streamUrl = requireNotNull(engine) { "Open a torrent before choosing a video." }.play(fileIndex)
+        TorrentPlaybackService.start(
+          requireNotNull(appContext.reactContext),
+          "Streaming a video from peers",
+        )
+        streamUrl
+      } catch (error: Throwable) {
+        Log.e(TAG, "playAsync failed", error)
+        throw error
+      }
     }
 
     AsyncFunction("statusAsync") {
@@ -45,5 +59,9 @@ class NekoTorrentModule : Module() {
       engine = null
       appContext.reactContext?.let(TorrentPlaybackService::stop)
     }
+  }
+
+  private companion object {
+    const val TAG = "NekoTorrent"
   }
 }

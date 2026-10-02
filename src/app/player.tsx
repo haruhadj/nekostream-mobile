@@ -34,6 +34,7 @@ function TorrentPlayerContent({ magnet, title }: { magnet?: string; title?: stri
     "statusChange",
     { status: player.status, error: undefined },
   );
+  const { isPlaying } = useEvent(player, "playingChange", { isPlaying: player.playing });
   const run = useRef(0);
   const [metadata, setMetadata] = useState<TorrentMetadata | null>(null);
   const [selectedFile, setSelectedFile] = useState<TorrentVideo | null>(null);
@@ -43,20 +44,6 @@ function TorrentPlayerContent({ magnet, title }: { magnet?: string; title?: stri
   const availabilityError = !NekoTorrent
     ? "Torrent playback is available in the rebuilt Android app."
     : !magnetUri ? "This release has no magnet link." : null;
-
-  useEffect(() => {
-    if (Platform.OS !== "android" || !NekoTorrent) return;
-    void (async () => {
-      await Notifications.setNotificationChannelAsync("torrent_playback", {
-        name: "Torrent playback",
-        importance: Notifications.AndroidImportance.LOW,
-      });
-      const permissions = await Notifications.getPermissionsAsync();
-      if (!permissions.granted && permissions.canAskAgain) {
-        await Notifications.requestPermissionsAsync();
-      }
-    })().catch(() => {});
-  }, []);
 
   const playFile = useCallback(async (file: TorrentVideo, currentRun: number) => {
     if (!NekoTorrent) return;
@@ -82,7 +69,10 @@ function TorrentPlayerContent({ magnet, title }: { magnet?: string; title?: stri
     const currentRun = ++run.current;
     const torrent = NekoTorrent;
     if (!torrent || !magnetUri) return;
-    void torrent.prepareAsync(magnetUri).then((result) => {
+    void (async () => {
+      await prepareTorrentNotifications();
+      if (run.current !== currentRun) return;
+      const result = await torrent.prepareAsync(magnetUri);
       if (run.current !== currentRun) return;
       setMetadata(result);
       if (result.files.length === 1) {
@@ -90,7 +80,7 @@ function TorrentPlayerContent({ magnet, title }: { magnet?: string; title?: stri
       } else {
         setPhase("select");
       }
-    }).catch((cause) => {
+    })().catch((cause) => {
       if (run.current === currentRun) {
         setError(cause instanceof Error ? cause.message : "Could not open this torrent.");
       }
@@ -154,7 +144,13 @@ function TorrentPlayerContent({ magnet, title }: { magnet?: string; title?: stri
           <View style={styles.details}>
             <Text style={styles.heading} numberOfLines={2}>{selectedFile.name}</Text>
             <Text style={styles.muted}>
-              {phase === "starting" ? "Starting stream…" : videoStatus === "readyToPlay" ? "Playing from peers" : "Buffering from peers…"}
+              {phase === "starting"
+                ? "Starting stream…"
+                : isPlaying
+                  ? "Playing from peers"
+                  : videoStatus === "readyToPlay"
+                    ? "Ready to play"
+                    : "Buffering from peers…"}
             </Text>
             {torrentStatus?.state === "downloading" ? (
               <Text style={styles.muted}>
@@ -184,6 +180,23 @@ function TorrentPlayerContent({ magnet, title }: { magnet?: string; title?: stri
       </ScrollView>
     </Screen>
   );
+}
+
+async function prepareTorrentNotifications(): Promise<void> {
+  if (Platform.OS !== "android") return;
+
+  try {
+    await Notifications.setNotificationChannelAsync("torrent_playback", {
+      name: "Torrent playback",
+      importance: Notifications.AndroidImportance.LOW,
+    });
+    const currentPermission = await Notifications.getPermissionsAsync();
+    if (!currentPermission.granted && currentPermission.canAskAgain) {
+      await Notifications.requestPermissionsAsync();
+    }
+  } catch (cause) {
+    console.warn("Could not prepare torrent playback notifications", cause);
+  }
 }
 
 const styles = StyleSheet.create({

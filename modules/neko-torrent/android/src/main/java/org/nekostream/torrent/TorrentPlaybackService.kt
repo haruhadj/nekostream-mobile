@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 
 internal class TorrentPlaybackService : Service() {
   override fun onBind(intent: Intent?): IBinder? = null
@@ -28,7 +29,7 @@ internal class TorrentPlaybackService : Service() {
     val notification = Notification.Builder(this, channelId)
       .setSmallIcon(android.R.drawable.ic_media_play)
       .setContentTitle("NekoStream torrent player")
-      .setContentText("Streaming a video from peers")
+      .setContentText(intent?.getStringExtra(EXTRA_STATUS) ?: STATUS_LOOKING_UP)
       .setContentIntent(launch)
       .setOngoing(true)
       .build()
@@ -38,15 +39,25 @@ internal class TorrentPlaybackService : Service() {
     } else {
       startForeground(NOTIFICATION_ID, notification)
     }
+    Log.i(TAG, "Foreground torrent notification active")
     return START_NOT_STICKY
   }
 
   companion object {
     private const val NOTIFICATION_ID = 2207
+    private const val EXTRA_STATUS = "status"
+    private const val STATUS_LOOKING_UP = "Finding torrent metadata and peers"
+    private const val TAG = "NekoTorrent"
 
-    fun start(context: Context) {
+    fun start(context: Context, status: String = STATUS_LOOKING_UP) {
       val intent = Intent(context, TorrentPlaybackService::class.java)
-      context.startForegroundService(intent)
+        .putExtra(EXTRA_STATUS, status)
+      try {
+        context.startForegroundService(intent)
+      } catch (error: Throwable) {
+        Log.e(TAG, "Could not start foreground torrent service", error)
+        throw error
+      }
     }
 
     fun stop(context: Context) {
