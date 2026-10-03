@@ -50,3 +50,5 @@ example
 .impeccable/questions/
 .impeccable/review/
 .codebase-memory/
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
