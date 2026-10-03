@@ -4,7 +4,8 @@ import { Stack, useFocusEffect, useIsFocused, useLocalSearchParams, useRouter } 
 import * as Notifications from "expo-notifications";
 import { useVideoPlayer, VideoView, type AudioTrack, type SubtitleTrack, type VideoContentFit, type VideoPlayer } from "expo-video";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View, type GestureResponderEvent } from "react-native";
+import { ActivityIndicator, BackHandler, Platform, Pressable, ScrollView, StyleSheet, Text, View, type GestureResponderEvent } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import NekoTorrent, {
   type TorrentMetadata,
@@ -17,7 +18,7 @@ import { formatBytes } from "@shared/format";
 import { theme } from "@/theme";
 import { decodeTorrentMagnet } from "@/lib/torrent-route";
 import { Button } from "@/ui/button";
-import { Screen, SCREEN_PADDING } from "@/ui/screen";
+import { SCREEN_PADDING } from "@/ui/screen";
 
 export default function TorrentPlayerScreen() {
   const { magnet, title } = useLocalSearchParams<{ magnet: string; title: string }>();
@@ -26,10 +27,10 @@ export default function TorrentPlayerScreen() {
 
 function TorrentPlayerContent({ magnet, title }: { magnet?: string; title?: string }) {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
   const magnetUri = magnet ? decodeTorrentMagnet(magnet) : null;
   const player = useVideoPlayer(null);
-  const videoView = useRef<VideoView>(null);
   const { status: videoStatus, error: videoError } = useEvent(
     player,
     "statusChange",
@@ -43,8 +44,16 @@ function TorrentPlayerContent({ magnet, title }: { magnet?: string; title?: stri
     currentOffsetFromLive: null,
   });
   const sourceLoad = useEvent(player, "sourceLoad", null);
+  const { availableSubtitleTracks } = useEvent(player, "availableSubtitleTracksChange", {
+    availableSubtitleTracks: player.availableSubtitleTracks,
+  });
+  const { subtitleTrack } = useEvent(player, "subtitleTrackChange", {
+    subtitleTrack: player.subtitleTrack,
+  });
   const playbackRateChange = useEvent(player, "playbackRateChange", { playbackRate: player.playbackRate });
   const run = useRef(0);
+  const streamUri = useRef<string | null>(null);
+  const subtitleChoiceMade = useRef(false);
   const [metadata, setMetadata] = useState<TorrentMetadata | null>(null);
   const [selectedFile, setSelectedFile] = useState<TorrentVideo | null>(null);
   const [phase, setPhase] = useState<"metadata" | "select" | "starting" | "playing">("metadata");
@@ -52,25 +61,34 @@ function TorrentPlayerContent({ magnet, title }: { magnet?: string; title?: stri
   const [error, setError] = useState<string | null>(null);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [controlsLocked, setControlsLocked] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [panel, setPanel] = useState<"audio" | "subtitles" | "speed" | "files" | null>(null);
   const [contentFit, setContentFit] = useState<VideoContentFit>("contain");
   const [scrubWidth, setScrubWidth] = useState(0);
   const currentTime = timeUpdate?.currentTime ?? 0;
   const duration = sourceLoad?.duration ?? player.duration;
+  const bufferedTime = player.bufferedPosition;
+  const playedPercent = duration > 0 ? Math.min(currentTime / duration, 1) * 100 : 0;
+  const bufferedPercent = duration > 0 && bufferedTime >= 0
+    ? Math.min(bufferedTime / duration, 1) * 100
+    : 0;
   const audioTracks = sourceLoad?.availableAudioTracks ?? player.availableAudioTracks;
-  const subtitleTracks = sourceLoad?.availableSubtitleTracks ?? player.availableSubtitleTracks;
+  const subtitleTracks = availableSubtitleTracks;
   const availabilityError = !NekoTorrent
     ? "Torrent playback is available in the rebuilt Android app."
     : !magnetUri ? "This release has no magnet link." : null;
 
   const playFile = useCallback(async (file: TorrentVideo, currentRun: number) => {
     if (!NekoTorrent) return;
+    subtitleChoiceMade.current = false;
+    streamUri.current = null;
     setSelectedFile(file);
     setPhase("starting");
     setError(null);
     try {
       const uri = await NekoTorrent.playAsync(file.index);
       if (run.current !== currentRun) return;
+      streamUri.current = uri;
       await player.replaceAsync({ uri, contentType: "progressive" });
       if (run.current !== currentRun) return;
       player.play();
@@ -126,6 +144,26 @@ function TorrentPlayerContent({ magnet, title }: { magnet?: string; title?: stri
   }, [player]);
 
   useEffect(() => {
+    if (subtitleChoiceMade.current || !sourceLoad) return;
+    const loadedSource = sourceLoad.videoSource;
+    if (!loadedSource || typeof loadedSource !== "object" || loadedSource.uri !== streamUri.current) return;
+
+    const tracks = player.availableSubtitleTracks;
+    if (!tracks.length) return;
+    setSubtitleTrack(player, tracks.find((track) => track.isDefault) ?? tracks[0]);
+    subtitleChoiceMade.current = true;
+  }, [availableSubtitleTracks, player, sourceLoad]);
+
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      setIsFullscreen(false);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [isFullscreen]);
+
+  useEffect(() => {
     if (!isPlaying || !controlsVisible || panel || controlsLocked) return;
     const timer = setTimeout(() => setControlsVisible(false), 4_000);
     return () => clearTimeout(timer);
@@ -152,6 +190,7 @@ function TorrentPlayerContent({ magnet, title }: { magnet?: string; title?: stri
   };
 
   const selectSubtitleTrack = (track: SubtitleTrack | null) => {
+    subtitleChoiceMade.current = true;
     setSubtitleTrack(player, track);
     setPanel(null);
   };
@@ -160,24 +199,42 @@ function TorrentPlayerContent({ magnet, title }: { magnet?: string; title?: stri
     setContentFit((current) => current === "contain" ? "cover" : current === "cover" ? "fill" : "contain");
   };
 
+  const toggleFullscreen = () => {
+    setPanel(null);
+    setControlsVisible(true);
+    setIsFullscreen((current) => !current);
+  };
+
   return (
-    <Screen>
-      <Stack.Screen options={{ headerShown: false }} />
-      <View style={styles.videoFrame}>
+    <View style={[styles.screen, !isFullscreen && { paddingTop: insets.top }]}>
+      <Stack.Screen options={{
+        headerShown: false,
+        orientation: isFullscreen ? "landscape" : "portrait",
+        statusBarHidden: isFullscreen,
+        navigationBarHidden: isFullscreen,
+      }} />
+      <View style={isFullscreen ? styles.fullscreenFrame : styles.videoFrame}>
         <VideoView
-          ref={videoView}
           player={player}
           style={StyleSheet.absoluteFill}
           nativeControls={false}
           contentFit={contentFit}
           surfaceType="textureView"
-          fullscreenOptions={{ enable: true }}
         />
         <Pressable style={StyleSheet.absoluteFill} onPress={showControls} accessibilityLabel="Show player controls" />
         {controlsVisible ? (
-          <View style={styles.controls} pointerEvents="box-none">
+          <View style={[styles.controls, isFullscreen && {
+            paddingLeft: Math.max(insets.left, 10),
+            paddingRight: Math.max(insets.right, 10),
+            paddingTop: Math.max(insets.top, 5),
+            paddingBottom: Math.max(insets.bottom, 5),
+          }]} pointerEvents="box-none">
             <View style={styles.topControls} pointerEvents="box-none">
-              <ControlButton icon="arrow-left" label="Back" onPress={() => router.back()} />
+              <ControlButton
+                icon="arrow-left"
+                label={isFullscreen ? "Exit fullscreen" : "Back"}
+                onPress={() => isFullscreen ? toggleFullscreen() : router.back()}
+              />
               <View style={styles.videoHeading} pointerEvents="none">
                 <Text style={styles.videoTitle} numberOfLines={1}>{title ?? selectedFile?.name ?? metadata?.name ?? "Torrent player"}</Text>
                 {selectedFile ? <Text style={styles.videoSubtitle} numberOfLines={1}>{selectedFile.name}</Text> : null}
@@ -214,7 +271,7 @@ function TorrentPlayerContent({ magnet, title }: { magnet?: string; title?: stri
                   </Pressable>
                   <ControlButton icon="volume-2" label="Audio tracks" onPress={() => setPanel("audio")} />
                   <ControlButton icon="list" label="Subtitles" onPress={() => setPanel("subtitles")} />
-                  <ControlButton icon="maximize-2" label="Fullscreen" onPress={() => void videoView.current?.enterFullscreen()} />
+                  <ControlButton icon={isFullscreen ? "minimize-2" : "maximize-2"} label={isFullscreen ? "Exit fullscreen" : "Fullscreen"} onPress={toggleFullscreen} />
                 </View>
                 <View style={styles.scrubRow}>
                   <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
@@ -226,8 +283,9 @@ function TorrentPlayerContent({ magnet, title }: { magnet?: string; title?: stri
                     accessibilityLabel="Seek video"
                   >
                     <View style={styles.scrubBackground} />
-                    <View style={[styles.scrubProgress, { width: `${duration > 0 ? Math.min(currentTime / duration, 1) * 100 : 0}%` }]} />
-                    <View style={[styles.scrubThumb, { left: `${duration > 0 ? Math.min(currentTime / duration, 1) * 100 : 0}%` }]} />
+                    <View style={[styles.scrubBuffered, { width: `${bufferedPercent}%` }]} />
+                    <View style={[styles.scrubProgress, { width: `${playedPercent}%` }]} />
+                    <View style={[styles.scrubThumb, { left: `${playedPercent}%` }]} />
                   </Pressable>
                   <Text style={styles.timeText}>{formatTime(duration)}</Text>
                 </View>
@@ -256,9 +314,14 @@ function TorrentPlayerContent({ magnet, title }: { magnet?: string; title?: stri
               )) : <Text style={styles.panelEmpty}>No alternate audio tracks</Text> : null}
               {panel === "subtitles" ? (
                 <>
-                  <PanelOption label="Off" selected={player.subtitleTrack === null} onPress={() => selectSubtitleTrack(null)} />
+                  <PanelOption label="Off" selected={subtitleTrack === null} onPress={() => selectSubtitleTrack(null)} />
                   {subtitleTracks.map((track, index) => (
-                    <PanelOption key={track.id ?? `${track.language}-${index}`} label={track.label || track.language || `Subtitle ${index + 1}`} selected={player.subtitleTrack === track} onPress={() => selectSubtitleTrack(track)} />
+                    <PanelOption
+                      key={track.id ?? `${track.language}-${index}`}
+                      label={track.name || track.label || track.language || `Subtitle ${index + 1}`}
+                      selected={subtitleTrack?.id === track.id && subtitleTrack?.language === track.language}
+                      onPress={() => selectSubtitleTrack(track)}
+                    />
                   ))}
                   {!subtitleTracks.length ? <Text style={styles.panelEmpty}>No embedded subtitles</Text> : null}
                 </>
@@ -274,7 +337,7 @@ function TorrentPlayerContent({ magnet, title }: { magnet?: string; title?: stri
         ) : null}
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      {!isFullscreen ? <ScrollView contentContainerStyle={styles.content}>
         {phase === "metadata" && !error && !availabilityError ? (
           <View style={styles.loading}>
             <ActivityIndicator color={theme.color.accent} />
@@ -331,8 +394,8 @@ function TorrentPlayerContent({ magnet, title }: { magnet?: string; title?: stri
             ) : null}
           </View>
         ) : null}
-      </ScrollView>
-    </Screen>
+      </ScrollView> : null}
+    </View>
   );
 }
 
@@ -432,7 +495,9 @@ async function prepareTorrentNotifications(): Promise<void> {
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: theme.color.background },
   videoFrame: { width: "100%", aspectRatio: 16 / 9, backgroundColor: "#000", overflow: "hidden" },
+  fullscreenFrame: { flex: 1, width: "100%", backgroundColor: "#000", overflow: "hidden" },
   controls: { ...StyleSheet.absoluteFill, justifyContent: "space-between", paddingHorizontal: 10, paddingVertical: 5, backgroundColor: "rgba(0,0,0,0.12)" },
   topControls: { minHeight: 42, flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "rgba(0,0,0,0.42)", borderRadius: 8 },
   videoHeading: { flex: 1, paddingHorizontal: 5 },
@@ -449,6 +514,7 @@ const styles = StyleSheet.create({
   timeText: { color: "#fff", fontSize: 10, fontVariant: ["tabular-nums"] },
   scrubTrack: { height: 18, flex: 1, justifyContent: "center" },
   scrubBackground: { height: 3, backgroundColor: "rgba(255,255,255,0.42)", borderRadius: 3 },
+  scrubBuffered: { position: "absolute", left: 0, height: 3, backgroundColor: "rgba(255,255,255,0.78)", borderRadius: 3 },
   scrubProgress: { position: "absolute", left: 0, height: 3, backgroundColor: theme.color.accent, borderRadius: 3 },
   scrubThumb: { position: "absolute", width: 10, height: 10, marginLeft: -5, borderRadius: 5, backgroundColor: "#fff" },
   panel: { position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: "78%", backgroundColor: "rgba(15,15,17,0.96)", borderTopLeftRadius: 14, borderTopRightRadius: 14, paddingHorizontal: 14, paddingBottom: 8 },
