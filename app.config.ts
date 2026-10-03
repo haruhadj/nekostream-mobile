@@ -32,6 +32,7 @@ export default function appConfig({ config }: ConfigContext): ExpoConfig {
         },
       ],
       ...(standalone ? ["./plugins/with-standalone-android"] : []),
+      "./plugins/with-arm64-android",
     ],
     android: {
       ...config.android,

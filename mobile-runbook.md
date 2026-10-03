@@ -12,6 +12,13 @@ Expo Go cannot run this project: it needs custom native modules and the
 registered `nekostream://auth/anilist` and `nekostream://auth/mal` callbacks.
 `expo-dev-client` supplies the project's own development launcher instead.
 
+Android builds support **arm64-v8a only**, for both NekoStream Dev and release.
+The build rejects other `reactNativeArchitectures` values. The npm Android
+commands use `--all-arch` to respect the configured ABI list rather than
+overriding it from a connected device; that list contains only arm64-v8a.
+x86 emulators and 32-bit ARM devices are unsupported. The release script checks
+the APK’s native libraries before signing.
+
 ## Prerequisites
 
 On the configured Linux workstation, load the local JDK 17, Android SDK, and Node paths:

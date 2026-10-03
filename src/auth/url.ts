@@ -23,6 +23,17 @@ export function formEncode(params: Record<string, string>): string {
     .join("&");
 }
 
+/** The browser session owns warm OAuth callbacks, not the navigation stack. */
+export function resolveOAuthNavigation(path: string, initial: boolean): string | null {
+  if (!/^(?:nekostream:\/\/\/?|\/?)auth\/(?:anilist|mal)\/?(?:[?#]|$)/i.test(path)) {
+    return null;
+  }
+  // Expo Router skips navigation for an empty warm-link result. The browser's
+  // independent Linking listener still receives the original URL and token.
+  // On cold launch, use the normal auth gate and discard OAuth URL parameters.
+  return initial ? "/" : "";
+}
+
 /**
  * Both halves of a redirect: `?query` (authorization code — MAL) and
  * `#fragment` (implicit grant — AniList). Parsed together because which one

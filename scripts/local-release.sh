@@ -61,7 +61,22 @@ cd "$MOBILE/android"
 # task's input tracking, and re-bundling costs seconds.
 rm -rf app/build/generated/assets/react/release
 
-./gradlew assembleRelease --max-workers=1 -Pkotlin.compiler.execution.strategy=in-process
+./gradlew assembleRelease --max-workers=1 -Pkotlin.compiler.execution.strategy=in-process -PreactNativeArchitectures=arm64-v8a
+
+# Check the packaged libraries before signing or reporting a successful build.
+"$JAVA_HOME/bin/jar" tf "$BUILT" | awk '
+  /^lib\/[^/]+\/.*\.so$/ {
+    found = 1
+    if ($0 !~ /^lib\/arm64-v8a\//) {
+      print "Unexpected native ABI in APK: " $0 > "/dev/stderr"
+      invalid = 1
+    }
+  }
+  END {
+    if (!found) print "APK contains no native libraries" > "/dev/stderr"
+    exit (invalid || !found)
+  }
+'
 
 "$APKSIGNER" sign \
   --ks "$KEYSTORE" \

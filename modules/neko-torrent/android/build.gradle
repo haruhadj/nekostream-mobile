@@ -12,6 +12,9 @@ android {
     versionCode 1
     versionName "0.1.0"
     consumerProguardFiles 'consumer-rules.pro'
+    ndk {
+      abiFilters 'arm64-v8a'
+    }
   }
   lintOptions {
     abortOnError false
@@ -25,12 +28,10 @@ configurations {
 
 dependencies {
   implementation 'org.libtorrent4j:libtorrent4j:2.1.0-39'
-  ['arm', 'arm64', 'x86', 'x86_64'].each { architecture ->
-    torrentNative "org.libtorrent4j:libtorrent4j-android-${architecture}:2.1.0-39"
-  }
+  torrentNative 'org.libtorrent4j:libtorrent4j-android-arm64:2.1.0-39'
 }
 
-tasks.register('extractTorrentNative', Copy) {
+tasks.register('extractTorrentNative', Sync) {
   from { configurations.torrentNative.collect { zipTree(it) } }
   include 'lib/**'
   eachFile { file -> file.path = file.path.replaceFirst('^lib/', '') }

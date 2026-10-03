@@ -16,6 +16,7 @@ import NekoTorrent, {
 import { formatBytes } from "@shared/format";
 
 import { theme } from "@/theme";
+import { selectDefaultSubtitle } from "@/lib/player-subtitles";
 import { decodeTorrentMagnet } from "@/lib/torrent-route";
 import { Button } from "@/ui/button";
 import { SCREEN_PADDING } from "@/ui/screen";
@@ -67,9 +68,9 @@ function TorrentPlayerContent({ magnet, title }: { magnet?: string; title?: stri
   const [scrubWidth, setScrubWidth] = useState(0);
   const currentTime = timeUpdate?.currentTime ?? 0;
   const duration = sourceLoad?.duration ?? player.duration;
-  const bufferedTime = player.bufferedPosition;
+  const bufferedTime = timeUpdate.bufferedPosition;
   const playedPercent = duration > 0 ? Math.min(currentTime / duration, 1) * 100 : 0;
-  const bufferedPercent = duration > 0 && bufferedTime >= 0
+  const bufferedPercent = Number.isFinite(duration) && duration > 0 && Number.isFinite(bufferedTime) && bufferedTime >= 0
     ? Math.min(bufferedTime / duration, 1) * 100
     : 0;
   const audioTracks = sourceLoad?.availableAudioTracks ?? player.availableAudioTracks;
@@ -150,8 +151,11 @@ function TorrentPlayerContent({ magnet, title }: { magnet?: string; title?: stri
 
     const tracks = player.availableSubtitleTracks;
     if (!tracks.length) return;
-    setSubtitleTrack(player, tracks.find((track) => track.isDefault) ?? tracks[0]);
-    subtitleChoiceMade.current = true;
+    const preferred = selectDefaultSubtitle(tracks);
+    const current = player.subtitleTrack;
+    if (preferred && (!current || current.id !== preferred.id || current.language !== preferred.language || current.label !== preferred.label)) {
+      setSubtitleTrack(player, preferred);
+    }
   }, [availableSubtitleTracks, player, sourceLoad]);
 
   useEffect(() => {
@@ -513,8 +517,8 @@ const styles = StyleSheet.create({
   scrubRow: { height: 28, flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 4 },
   timeText: { color: "#fff", fontSize: 10, fontVariant: ["tabular-nums"] },
   scrubTrack: { height: 18, flex: 1, justifyContent: "center" },
-  scrubBackground: { height: 3, backgroundColor: "rgba(255,255,255,0.42)", borderRadius: 3 },
-  scrubBuffered: { position: "absolute", left: 0, height: 3, backgroundColor: "rgba(255,255,255,0.78)", borderRadius: 3 },
+  scrubBackground: { height: 3, backgroundColor: "rgba(255,255,255,0.24)", borderRadius: 3 },
+  scrubBuffered: { position: "absolute", left: 0, height: 3, backgroundColor: "#fff", borderRadius: 3 },
   scrubProgress: { position: "absolute", left: 0, height: 3, backgroundColor: theme.color.accent, borderRadius: 3 },
   scrubThumb: { position: "absolute", width: 10, height: 10, marginLeft: -5, borderRadius: 5, backgroundColor: "#fff" },
   panel: { position: "absolute", left: 0, right: 0, bottom: 0, maxHeight: "78%", backgroundColor: "rgba(15,15,17,0.96)", borderTopLeftRadius: 14, borderTopRightRadius: 14, paddingHorizontal: 14, paddingBottom: 8 },

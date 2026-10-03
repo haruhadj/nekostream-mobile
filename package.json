@@ -50,14 +50,14 @@
   },
   "scripts": {
     "start": "expo start",
-    "android": "expo run:android",
+    "android": "expo prebuild --platform android --no-install && expo run:android --all-arch",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "db:generate": "drizzle-kit generate",
     "dev": "NEKOSTREAM_VARIANT=development NEKOSTREAM_BUILD_MODE=development expo start --dev-client --max-workers 2",
-    "android:dev": "NEKOSTREAM_VARIANT=development NEKOSTREAM_BUILD_MODE=development expo prebuild --platform android --no-install && NEKOSTREAM_VARIANT=development NEKOSTREAM_BUILD_MODE=development expo run:android --app-id org.nekostream.mobile.dev"
+    "android:dev": "NEKOSTREAM_VARIANT=development NEKOSTREAM_BUILD_MODE=development expo prebuild --platform android --no-install && NEKOSTREAM_VARIANT=development NEKOSTREAM_BUILD_MODE=development expo run:android --all-arch --app-id org.nekostream.mobile.dev"
   },
   "private": true
 }
