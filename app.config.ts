@@ -17,7 +17,7 @@ export default function appConfig({ config }: ConfigContext): ExpoConfig {
       ...(config.plugins ?? []),
       "expo-background-task",
       "expo-notifications",
-      "expo-video",
+      ["expo-video", { supportsPictureInPicture: true }],
       [
         "expo-build-properties",
         {

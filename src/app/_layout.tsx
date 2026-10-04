@@ -107,6 +107,9 @@ function RootNavigator() {
     <Stack
       screenOptions={{
         headerShown: false,
+        orientation: "portrait",
+        statusBarHidden: false,
+        navigationBarHidden: false,
         contentStyle: { backgroundColor: theme.color.background },
       }}
     >
@@ -114,11 +117,18 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="nyaa-search" />
         <Stack.Screen name="player" />
+        <Stack.Screen name="playback-settings" />
       </Stack.Protected>
 
       <Stack.Protected guard={status === "no-tracker"}>
         <Stack.Screen name="login" />
       </Stack.Protected>
+
+      {/* OAuth providers can launch the app as a navigation event instead of
+          letting WebBrowser consume the callback. Keep those routes explicit
+          so the callback screen never becomes an unregistered blank route. */}
+      <Stack.Screen name="auth/anilist" />
+      <Stack.Screen name="auth/mal" />
 
       {/* Keep deep-link Quick Add available, but out of the default fallback. */}
       <Stack.Screen name="add-anime" />

@@ -1,11 +1,26 @@
-import { NativeModule, requireOptionalNativeModule } from 'expo';
+import { NativeModule, requireOptionalNativeModule } from "expo";
 
 declare class NekoTorrentModule extends NativeModule<{}> {
-  prepareAsync(magnetUri: string): Promise<TorrentMetadata>;
+  prepareAsync(
+    magnetUri: string,
+    options: TorrentOptions,
+  ): Promise<TorrentMetadata>;
+  clearCacheAsync(): Promise<number>;
   playAsync(fileIndex: number): Promise<string>;
   statusAsync(): Promise<TorrentStatus>;
   stopAsync(): Promise<void>;
 }
+
+export type TorrentOptions = {
+  serverPort: number;
+  trackers: string;
+  enableDht: boolean;
+  enableLocalDiscovery: boolean;
+  maxConnections: number;
+  downloadLimitKiB: number;
+  uploadLimitKiB: number;
+  metadataTimeout: number;
+};
 
 export type TorrentVideo = {
   index: number;
@@ -19,7 +34,7 @@ export type TorrentMetadata = {
 };
 
 export type TorrentStatus = {
-  state: 'idle' | 'metadata' | 'ready' | 'downloading' | 'error';
+  state: "idle" | "metadata" | "ready" | "downloading" | "error";
   downloadedBytes?: number;
   totalBytes?: number;
   downloadRate?: number;
@@ -27,4 +42,4 @@ export type TorrentStatus = {
   error?: string;
 };
 
-export default requireOptionalNativeModule<NekoTorrentModule>('NekoTorrent');
+export default requireOptionalNativeModule<NekoTorrentModule>("NekoTorrent");

@@ -6,8 +6,25 @@
  * where this belongs too; the gate routes on from there.
  */
 
-import { Redirect } from "expo-router";
+import { useRouter } from "expo-router";
+import { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
+
+import { useAuth } from "@/auth/context";
+import { theme } from "@/theme";
 
 export default function MalRedirect() {
-  return <Redirect href="/" />;
+  const { status } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "ready") router.replace("/(tabs)");
+    if (status === "no-tracker") router.replace("/login");
+  }, [router, status]);
+
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.color.background, alignItems: "center", justifyContent: "center" }}>
+      <ActivityIndicator color={theme.color.accent} />
+    </View>
+  );
 }

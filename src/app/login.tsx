@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { ANILIST_CONFIG_ERROR } from "@/auth/config";
 import { useAuth } from "@/auth/context";
 import { theme } from "@/theme";
@@ -16,6 +17,7 @@ import { Wordmark } from "@/ui/wordmark";
 
 export default function LoginScreen() {
   const { signIn } = useAuth();
+  const router = useRouter();
   const [error, setError] = useState<string | null>(ANILIST_CONFIG_ERROR);
   const [busy, setBusy] = useState(false);
   async function connect() {
@@ -24,6 +26,7 @@ export default function LoginScreen() {
     setError(null);
     const message = await signIn();
     if (message) setError(message);
+    else router.replace("/(tabs)");
     setBusy(false);
   }
   return (

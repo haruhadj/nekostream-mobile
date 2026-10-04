@@ -1,4 +1,5 @@
 import Feather from "@expo/vector-icons/Feather";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View,
@@ -33,6 +34,7 @@ import { Screen, ScreenTitle, SCREEN_PADDING } from "@/ui/screen";
  */
 export default function SettingsScreen() {
   const { anilist, mal, linkMal, unlinkMal, signOut } = useAuth();
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [feedInterval, setIntervalValue] = useState<FeedInterval>("180");
@@ -186,6 +188,18 @@ export default function SettingsScreen() {
         {MAL_CONFIG_ERROR ? (
           <Text style={styles.hint}>{MAL_CONFIG_ERROR}</Text>
         ) : null}
+
+        <Text style={styles.sectionLabel}>Playback</Text>
+        <View style={styles.card}>
+          <Pressable style={styles.settingRow} onPress={() => router.push("/playback-settings")} accessibilityRole="button">
+            <Feather name="play-circle" size={24} color={theme.color.accent} />
+            <View style={styles.settingText}>
+              <Text style={styles.fieldValue}>Player and torrent settings</Text>
+              <Text style={styles.fieldDetail}>Controls, gestures, audio, subtitles, and streaming.</Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={theme.color.muted} />
+          </Pressable>
+        </View>
 
         <Text style={styles.sectionLabel}>Episode feeds</Text>
         <View style={styles.card}>

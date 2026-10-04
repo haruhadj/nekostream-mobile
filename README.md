@@ -36,6 +36,12 @@ stream shows a foreground notification when notification permission is granted.
 Leaving the player stops the torrent session and removes its temporary cache.
 Playback depends on available peers and codecs supported by the device.
 
+The internal player uses an Anikku-style full-screen control layout. See
+[Player controls and device validation](docs/player-ui.md) for gestures,
+playback engine differences, and the required native rebuild.
+Persistent defaults and torrent tuning are described in
+[Playback and torrent preferences](docs/playback-settings.md).
+
 ## Project layout
 
 - `src/` — application UI, on-device database, authentication, and sync.

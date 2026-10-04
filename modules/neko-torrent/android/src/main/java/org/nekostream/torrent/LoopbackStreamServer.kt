@@ -21,6 +21,7 @@ internal class LoopbackStreamServer(
   private val fileSize: Long,
   private val pieceLength: Int,
   private val pieceCount: Int,
+  private val port: Int,
 ) {
   private val token = UUID.randomUUID().toString()
   private val clients = Executors.newCachedThreadPool()
@@ -28,7 +29,11 @@ internal class LoopbackStreamServer(
   @Volatile private var closed = false
 
   fun start(): String {
-    listener = ServerSocket(0, 8, InetAddress.getByName("127.0.0.1"))
+    listener = try {
+      ServerSocket(port, 8, InetAddress.getByName("127.0.0.1"))
+    } catch (error: java.net.BindException) {
+      throw IllegalStateException("Stream port $port is in use. Choose Automatic or another port in torrent settings.", error)
+    }
     Thread({ acceptClients() }, "neko-torrent-http").apply { isDaemon = true }.start()
     return "http://127.0.0.1:${listener.localPort}/stream/$token"
   }
